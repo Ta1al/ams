@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { LogIn } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
-import API_BASE_URL from '../config/api';
 
 const Login = () => {
   const [formData, setFormData] = useState({
@@ -24,7 +23,7 @@ const Login = () => {
     setError('');
 
     try {
-      const response = await fetch(`${API_BASE_URL}/api/auth/login`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5001'}/api/auth/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
