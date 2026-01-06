@@ -4,7 +4,7 @@ import { LogIn } from 'lucide-react';
 
 const Login = () => {
   const [formData, setFormData] = useState({
-    email: '',
+    username: '',
     password: '',
   });
   const [error, setError] = useState('');
@@ -70,10 +70,10 @@ const Login = () => {
               </label>
               <input
                 type="text"
-                name="email"
+                name="username"
                 placeholder="Enter your username"
                 className="input input-bordered w-full"
-                value={formData.email}
+                value={formData.username}
                 onChange={handleChange}
                 required
               />
