@@ -19,6 +19,16 @@ const userSchema = new mongoose.Schema({
     enum: ['admin', 'teacher', 'student'],
     default: 'student',
   },
+  program: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Program',
+    // relevant for students
+  },
+  department: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Department',
+    // relevant for teachers/staff
+  },
 }, {
   timestamps: true,
 });
