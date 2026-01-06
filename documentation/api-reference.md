@@ -1,7 +1,7 @@
 # API Reference
 
 > **Note**: This documentation is automatically generated from the backend code.
-> Last updated: 2026-01-06T18:05:57.106Z
+> Last updated: 2026-01-06T18:10:32.608Z
 
 ## Overview
 
@@ -55,6 +55,25 @@ This document provides a comprehensive reference for all API endpoints in the AM
 - `createFaculty`
 - `deleteFaculty`
 
+### userController
+
+#### `GET /api/users`
+
+#### `GET /api/users/:id`
+
+#### `POST /api/users`
+
+#### `PUT /api/users/:id`
+
+#### `DELETE /api/users/:id`
+
+**Handler Functions:**
+- `getUsers`
+- `getUser`
+- `createUser`
+- `updateUser`
+- `deleteUser`
+
 ## Route Files
 
 > **Note**: Routes marked as `ROUTE` use `router.route()` which can handle multiple HTTP methods on the same path.
@@ -85,6 +104,16 @@ This document provides a comprehensive reference for all API endpoints in the AM
 - middleware/authMiddleware
 
 ### facultyRoutes
+
+**Endpoints:**
+
+- `ROUTE /`
+- `ROUTE /:id`
+
+**Middleware:**
+- middleware/authMiddleware
+
+### userRoutes
 
 **Endpoints:**
 
