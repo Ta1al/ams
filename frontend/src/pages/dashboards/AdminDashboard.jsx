@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
 import { Users, GraduationCap, UserCog, TrendingUp } from 'lucide-react';
 
 const AdminDashboard = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -100,7 +102,7 @@ const AdminDashboard = () => {
         <div className="card-body">
           <h2 className="card-title">Quick Actions</h2>
           <div className="flex flex-wrap gap-3 mt-4">
-            <button className="btn btn-primary">
+            <button onClick={() => navigate('/admin/users')} className="btn btn-primary">
               <Users className="w-4 h-4" />
               Add User
             </button>
