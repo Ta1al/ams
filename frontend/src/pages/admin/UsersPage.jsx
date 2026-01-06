@@ -1,7 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../../hooks/useAuth';
 import { Plus, Pencil, Trash2, Search, Users } from 'lucide-react';
-import API_BASE_URL from '../../config/api';
 import DashboardLayout from '../../components/DashboardLayout';
 import UserModal from '../../components/modals/UserModal';
 
@@ -17,7 +16,7 @@ const UsersPage = () => {
 
   const fetchUsers = useCallback(async () => {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/users`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5001'}/api/users`, {
         headers: {
           Authorization: `Bearer ${user?.token}`,
         },
