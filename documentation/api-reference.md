@@ -1,7 +1,7 @@
 # API Reference
 
 > **Note**: This documentation is automatically generated from the backend code.
-> Last updated: 2026-01-06T17:54:32.048Z
+> Last updated: 2026-01-06T18:05:57.106Z
 
 ## Overview
 
@@ -15,6 +15,25 @@ This document provides a comprehensive reference for all API endpoints in the AM
 
 **Handler Functions:**
 - `loginUser`
+
+### courseController
+
+#### `GET /api/courses`
+
+#### `GET /api/courses/:id`
+
+#### `POST /api/courses`
+
+#### `PUT /api/courses/:id`
+
+#### `DELETE /api/courses/:id`
+
+**Handler Functions:**
+- `getCourses`
+- `getCourseById`
+- `createCourse`
+- `updateCourse`
+- `deleteCourse`
 
 ### dashboardController
 
@@ -45,6 +64,16 @@ This document provides a comprehensive reference for all API endpoints in the AM
 **Endpoints:**
 
 - `POST /login`
+
+### courseRoutes
+
+**Endpoints:**
+
+- `ROUTE /`
+- `ROUTE /:id`
+
+**Middleware:**
+- middleware/authMiddleware
 
 ### dashboardRoutes
 
