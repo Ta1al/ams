@@ -116,7 +116,7 @@ flowchart TD
     P -->|401 if no/invalid token| X401[401 Not authorized]
     P -->|req.user set| G{adminOnly required?}
     G -->|No| H[Route handler]
-    G -->|Yes| A{req.user.role == "admin"?}
+  G -->|Yes| A{req.user.role == admin?}
     A -->|No| X403[403 Not authorized as an admin]
     A -->|Yes| H
 ```
