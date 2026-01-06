@@ -12,6 +12,7 @@ const seedAdmin = async () => {
     await connectDB();
 
     const adminPassword = process.env.ADMIN_PASSWORD;
+    const adminUsername = process.env.ADMIN_USERNAME || 'admin';
     if (!adminPassword) {
       console.error('ADMIN_PASSWORD not set in .env file');
       process.exit(1);
@@ -21,21 +22,22 @@ const seedAdmin = async () => {
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(adminPassword, salt);
 
-    // Check if admin already exists
-    let adminUser = await User.findOne({ role: 'admin' });
+    // Check if admin already exists (by username)
+    let adminUser = await User.findOne({ username: adminUsername });
 
     if (adminUser) {
         console.log('Admin account found, updating...');
         adminUser.name = 'Admin';
-        adminUser.email = 'admin';
+        adminUser.username = adminUsername;
         adminUser.password = hashedPassword;
+        adminUser.role = 'admin';
         await adminUser.save();
         console.log('Admin account updated successfully!');
     } else {
         console.log('Creating new Admin account...');
         adminUser = new User({
           name: 'Admin',
-          email: 'admin',
+          username: adminUsername,
           password: hashedPassword,
           role: 'admin',
         });
@@ -43,7 +45,7 @@ const seedAdmin = async () => {
         console.log('Admin account created successfully!');
     }
 
-    console.log('Username: admin');
+    console.log(`Username: ${adminUsername}`);
     
     process.exit();
   } catch (error) {
