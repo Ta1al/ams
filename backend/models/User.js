@@ -34,16 +34,4 @@ const userSchema = new mongoose.Schema({
   timestamps: true,
 });
 
-// Backwards compatibility: older code may read/write `email`
-userSchema.virtual('email')
-  .get(function () {
-    return this.username;
-  })
-  .set(function (value) {
-    this.username = value;
-  });
-
-userSchema.set('toJSON', { virtuals: true });
-userSchema.set('toObject', { virtuals: true });
-
 module.exports = mongoose.model('User', userSchema);

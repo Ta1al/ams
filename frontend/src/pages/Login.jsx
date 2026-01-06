@@ -66,7 +66,7 @@ const Login = () => {
           <form onSubmit={handleSubmit}>
             <div className="form-control w-full">
               <label className="label">
-                <span className="label-text font-medium">Username / Email</span>
+                <span className="label-text font-medium">Username</span>
               </label>
               <input
                 type="text"

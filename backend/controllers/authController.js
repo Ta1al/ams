@@ -7,10 +7,16 @@ const User = require('../models/User');
 // @access  Public
 const loginUser = async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const { username, password } = req.body;
+
+    const normalizedUsername = (username || '').trim();
+
+    if (!normalizedUsername || !password) {
+      return res.status(400).json({ message: 'Username and password are required' });
+    }
 
     // Check for user
-    const user = await User.findOne({ email });
+    const user = await User.findOne({ username: normalizedUsername });
 
     if (user && (await bcrypt.compare(password, user.password))) {
       const token = jwt.sign(
@@ -22,7 +28,7 @@ const loginUser = async (req, res) => {
       res.json({
         _id: user.id,
         name: user.name,
-        email: user.email,
+        username: user.username,
         role: user.role,
         token,
       });
