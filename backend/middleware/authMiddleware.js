@@ -1,6 +1,7 @@
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 
+// Protect routes - verify JWT token
 const protect = async (req, res, next) => {
   let token;
 
@@ -15,7 +16,7 @@ const protect = async (req, res, next) => {
       // Verify token
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-      // Get user from the token
+      // Get user from the token (exclude password)
       req.user = await User.findById(decoded.id).select('-password');
 
       if (!req.user) {
@@ -25,7 +26,7 @@ const protect = async (req, res, next) => {
       return next();
     } catch (error) {
       console.error(error);
-      return res.status(401).json({ message: 'Not authorized' });
+      return res.status(401).json({ message: 'Not authorized, token failed' });
     }
   }
 
@@ -34,6 +35,19 @@ const protect = async (req, res, next) => {
   }
 };
 
+// Authorize specific roles
+const authorize = (...roles) => {
+  return (req, res, next) => {
+    if (!roles.includes(req.user.role)) {
+      return res.status(403).json({
+        message: `Role '${req.user.role}' is not authorized to access this route`,
+      });
+    }
+    next();
+  };
+};
+
+// Admin only middleware (alias for authorize('admin'))
 const adminOnly = (req, res, next) => {
   if (req.user && req.user.role === 'admin') {
     next();
@@ -42,4 +56,4 @@ const adminOnly = (req, res, next) => {
   }
 };
 
-module.exports = { protect, adminOnly };
+module.exports = { protect, authorize, adminOnly };
