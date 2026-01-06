@@ -52,3 +52,12 @@ This represents a MERN stack application organized in a simple monorepo structur
 ## Common Patterns
 - **Forms**: Prevent default submission `e.preventDefault()` and handle state via controlled inputs.
 - **API calls**: (Future) Centralize API calls or use a service layer. Ensure JSON responses.
+
+## Business Logic & Authentication Rules
+- **Registration**: NO public self-registration for any role.
+  - **Students/Teachers**: Accounts are created solely by Admins via an internal dashboard.
+  - **Admins**: The initial Admin account must be created via a database seed script (bootstrapping).
+- **Access Control**: Strict Role-Based Access Control (RBAC).
+  - Admin: Full access (User management, Class assignment).
+  - Teacher: Class management, Attendance marking.
+  - Student: View-only access for personal attendance.
