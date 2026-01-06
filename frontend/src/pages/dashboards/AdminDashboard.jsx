@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../../hooks/useAuth';
 import { Users, GraduationCap, UserCog, TrendingUp } from 'lucide-react';
-import API_BASE_URL from '../../config/api';
 
 const AdminDashboard = () => {
   const { user } = useAuth();
@@ -11,7 +10,7 @@ const AdminDashboard = () => {
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        const response = await fetch(`${API_BASE_URL}/api/dashboard/stats`, {
+        const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5001'}/api/dashboard/stats`, {
           headers: {
             Authorization: `Bearer ${user?.token}`,
           },
