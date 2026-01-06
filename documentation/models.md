@@ -15,6 +15,26 @@ The academic structure is organized as follows:
     *   **Teachers** belong to a **Department**.
     *   **Admins** oversee the system.
 
+## Course
+
+`Course` links an academic offering to the hierarchy and assigns a teacher.
+
+Fields:
+
+- `name` (required)
+- `code` (optional)
+- `department` (required, ref `Department`)
+- `division` (required, ref `Division`)
+- `program` (required, ref `Program`)
+- `teacher` (required, ref `User`)
+
+Consistency rules enforced on create/update (backend):
+
+- `division.department` must match the selected `department`.
+- `program.division` must match the selected `division`.
+- `teacher.role` must be `teacher`.
+- If the selected teacher has `department` set, it must match the selected `department`.
+
 ## Entity Relationship Diagrams
 
 ### Class Diagram
@@ -58,10 +78,26 @@ classDiagram
         +ObjectId division
     }
 
+    class Course {
+        +ObjectId _id
+        +String name
+        +String code
+        +ObjectId department
+        +ObjectId division
+        +ObjectId program
+        +ObjectId teacher
+    }
+
     %% Hierarchy Relationships
     Faculty "1" --> "*" Department : contains
     Department "1" --> "*" Division : contains
     Division "1" --> "*" Program : offers
+
+    %% Course Relationships
+    Department "1" --> "*" Course : offers
+    Division "1" --> "*" Course : offers
+    Program "1" --> "*" Course : offers
+    User "1" --> "*" Course : teaches
 
     %% User Relationships
     User "*" --> "0..1" Program : enrolled (Student)
@@ -78,6 +114,11 @@ erDiagram
     FACULTY ||--|{ DEPARTMENT : contains
     DEPARTMENT ||--|{ DIVISION : contains
     DIVISION ||--|{ PROGRAM : offers
+
+    DEPARTMENT ||--|{ COURSE : offers
+    DIVISION ||--|{ COURSE : offers
+    PROGRAM ||--|{ COURSE : offers
+    USER ||--|{ COURSE : teaches
     
     USER ||--o| PROGRAM : "enrolled in (Student)"
     USER ||--o| DEPARTMENT : "works in (Teacher)"
@@ -107,6 +148,16 @@ erDiagram
         String name
         String level
         ObjectId division
+    }
+
+    COURSE {
+        ObjectId _id
+        String name
+        String code
+        ObjectId department
+        ObjectId division
+        ObjectId program
+        ObjectId teacher
     }
 
     USER {

@@ -135,6 +135,22 @@ Routes:
 - `POST /api/faculties` → `protect` → `adminOnly` → create faculty
 - `DELETE /api/faculties/:id` → `protect` → `adminOnly` → delete faculty
 
+### Courses
+
+Mounted under `backend/server.js`:
+
+- Base path: `/api/courses`
+
+Routes:
+
+- `GET /api/courses` → `protect` → list courses
+  - Teachers are restricted to courses where `teacher == req.user._id`.
+  - Students are restricted to courses where `program == req.user.program`.
+- `GET /api/courses/:id` → `protect` → get one course (same role restrictions as above)
+- `POST /api/courses` → `protect` → `adminOnly` → create course
+- `PUT /api/courses/:id` → `protect` → `adminOnly` → update course
+- `DELETE /api/courses/:id` → `protect` → `adminOnly` → delete course
+
 ### HTTP status conventions (current)
 
 - `200`: successful reads/deletes
