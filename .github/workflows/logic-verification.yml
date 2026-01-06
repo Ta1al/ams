@@ -29,11 +29,6 @@ jobs:
         with:
           node-version: '20'
 
-      - name: Install GitHub Copilot CLI
-        run: |
-          npm install -g @githubnext/github-copilot-cli
-          echo "Copilot CLI installed"
-
       - name: Analyze Backend Structure
         id: analyze
         run: |
@@ -228,54 +223,13 @@ jobs:
           EOF
           
           node /tmp/analyze-backend.js > /tmp/backend-analysis.json
-          cat /tmp/backend-analysis.json
-
-      - name: Verify Backend Logic with Copilot
-        id: verify
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          echo "=== Backend Logic Verification ===" 
           
-          # Create verification prompts file
-          cat > /tmp/verification-prompts.txt << 'EOF'
-          Please analyze the backend code and verify the following:
-          
-          1. CONSISTENCY CHECKS:
-             - Are all model relationships properly defined and consistent?
-             - Do controllers properly handle all error cases?
-             - Are middleware functions correctly applied to routes?
-             - Are authentication and authorization consistently implemented?
-          
-          2. LOGIC CHECKS:
-             - Are there any potential race conditions or concurrency issues?
-             - Are database queries optimized and properly indexed?
-             - Are validation rules consistent across models and controllers?
-             - Are error messages consistent and helpful?
-          
-          3. SECURITY CHECKS:
-             - Are passwords properly hashed?
-             - Are JWT tokens properly validated?
-             - Are SQL injection vulnerabilities prevented?
-             - Are sensitive data properly protected?
-          
-          4. ARCHITECTURE CHECKS:
-             - Does the code follow MVC pattern correctly?
-             - Are concerns properly separated?
-             - Is the code DRY (Don't Repeat Yourself)?
-             - Are there any circular dependencies?
-          
-          Please provide specific findings with file names and line numbers where applicable.
-          EOF
-          
-          # Create summary of findings
-          echo "Backend structure analyzed successfully" > /tmp/verification-results.txt
-          echo "" >> /tmp/verification-results.txt
-          echo "Models found: $(cat /tmp/backend-analysis.json | grep -o '"models"' | wc -l)" >> /tmp/verification-results.txt
-          echo "Controllers found: $(cat /tmp/backend-analysis.json | grep -o '"controllers"' | wc -l)" >> /tmp/verification-results.txt
-          echo "Routes found: $(cat /tmp/backend-analysis.json | grep -o '"routes"' | wc -l)" >> /tmp/verification-results.txt
-          
-          cat /tmp/verification-results.txt
+          echo ""
+          echo "=== Analysis Summary ==="
+          echo "Models: $(cat /tmp/backend-analysis.json | jq '.models | length')"
+          echo "Controllers: $(cat /tmp/backend-analysis.json | jq '.controllers | length')"
+          echo "Routes: $(cat /tmp/backend-analysis.json | jq '.routes | length')"
+          echo "Middleware: $(cat /tmp/backend-analysis.json | jq '.middleware | length')"
 
       - name: Generate/Update Documentation
         id: document
@@ -325,6 +279,7 @@ jobs:
           
           // Document route files
           apiDoc += '## Route Files\n\n';
+          apiDoc += '> **Note**: Routes marked as `ROUTE` use `router.route()` which can handle multiple HTTP methods on the same path.\n\n';
           analysis.routes.forEach(route => {
             apiDoc += `### ${route.name}\n\n`;
             

@@ -1,7 +1,7 @@
 # API Reference
 
 > **Note**: This documentation is automatically generated from the backend code.
-> Last updated: 2026-01-06T17:47:59.590Z
+> Last updated: 2026-01-06T17:53:33.699Z
 
 ## Overview
 
@@ -37,6 +37,8 @@ This document provides a comprehensive reference for all API endpoints in the AM
 - `deleteFaculty`
 
 ## Route Files
+
+> **Note**: Routes marked as `ROUTE` use `router.route()` which can handle multiple HTTP methods on the same path.
 
 ### authRoutes
 
