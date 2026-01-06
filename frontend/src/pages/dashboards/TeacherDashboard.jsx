@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
 import { Users, CalendarCheck, BookOpen, Clock } from 'lucide-react';
 
 const TeacherDashboard = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -112,11 +114,11 @@ const TeacherDashboard = () => {
         <div className="card-body">
           <h2 className="card-title">Quick Actions</h2>
           <div className="flex flex-wrap gap-3 mt-4">
-            <button className="btn btn-primary">
+            <button onClick={() => navigate('/teacher/attendance')} className="btn btn-primary">
               <CalendarCheck className="w-4 h-4" />
               Mark Attendance
             </button>
-            <button className="btn btn-secondary">
+            <button onClick={() => navigate('/teacher/students')} className="btn btn-secondary">
               <Users className="w-4 h-4" />
               View Students
             </button>

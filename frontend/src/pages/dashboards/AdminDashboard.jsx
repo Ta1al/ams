@@ -106,11 +106,11 @@ const AdminDashboard = () => {
               <Users className="w-4 h-4" />
               Add User
             </button>
-            <button className="btn btn-secondary">
+            <button onClick={() => navigate('/admin/programs')} className="btn btn-secondary">
               <GraduationCap className="w-4 h-4" />
               Add Program
             </button>
-            <button className="btn btn-accent">
+            <button onClick={() => navigate('/admin/users')} className="btn btn-accent">
               <UserCog className="w-4 h-4" />
               Manage Roles
             </button>

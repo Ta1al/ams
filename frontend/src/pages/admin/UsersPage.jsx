@@ -37,9 +37,10 @@ const UsersPage = () => {
   }, [fetchUsers]);
 
   const handleSaveUser = async (formData) => {
+    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5001';
     const url = selectedUser
-      ? `${API_BASE_URL}/api/users/${selectedUser._id}`
-      : `${API_BASE_URL}/api/users`;
+      ? `${apiUrl}/api/users/${selectedUser._id}`
+      : `${apiUrl}/api/users`;
     const method = selectedUser ? 'PUT' : 'POST';
 
     const response = await fetch(url, {
@@ -62,7 +63,8 @@ const UsersPage = () => {
 
   const handleDeleteUser = async (userId) => {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/users/${userId}`, {
+      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5001';
+      const response = await fetch(`${apiUrl}/api/users/${userId}`, {
         method: 'DELETE',
         headers: {
           Authorization: `Bearer ${user?.token}`,
