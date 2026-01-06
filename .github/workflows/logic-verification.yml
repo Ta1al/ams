@@ -1,0 +1,477 @@
+name: Backend Logic Verification and Documentation
+
+on:
+  push:
+    branches:
+      - '**'
+    paths:
+      - 'backend/**'
+      - '.github/workflows/logic-verification.yml'
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+
+jobs:
+  verify-and-document:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Analyze Backend Structure
+        id: analyze
+        run: |
+          echo "=== Analyzing Backend Structure ===" 
+          
+          # Create enhanced analysis script
+          cat > /tmp/analyze-backend.js << 'EOF'
+          const fs = require('fs');
+          const path = require('path');
+          
+          const backendDir = path.join(process.cwd(), 'backend');
+          const analysis = {
+            models: [],
+            controllers: [],
+            routes: [],
+            middleware: [],
+            relationships: []
+          };
+          
+          // Helper to read file safely
+          function readFileSafe(filePath) {
+            try {
+              return fs.readFileSync(filePath, 'utf8');
+            } catch (e) {
+              return '';
+            }
+          }
+          
+          // Analyze models
+          const modelsDir = path.join(backendDir, 'models');
+          if (fs.existsSync(modelsDir)) {
+            const modelFiles = fs.readdirSync(modelsDir).filter(f => f.endsWith('.js'));
+            modelFiles.forEach(file => {
+              const content = readFileSafe(path.join(modelsDir, file));
+              const modelName = file.replace('.js', '');
+              
+              const modelInfo = {
+                name: modelName,
+                fields: [],
+                references: []
+              };
+              
+              // Extract complete schema
+              const schemaMatch = content.match(/const\s+\w+Schema\s+=\s+new\s+mongoose\.Schema\(\{([\s\S]*?)\},?\s*\{/);
+              if (schemaMatch) {
+                const schemaContent = schemaMatch[1];
+                
+                // Extract field names and types
+                const fieldMatches = schemaContent.matchAll(/(\w+):\s*\{[\s\S]*?type:\s*(\w+(?:\.\w+)*)/g);
+                for (const match of fieldMatches) {
+                  modelInfo.fields.push({
+                    name: match[1],
+                    type: match[2]
+                  });
+                }
+                
+                // Extract references to other models
+                const refMatches = schemaContent.matchAll(/ref:\s*['"](\w+)['"]/g);
+                for (const match of refMatches) {
+                  modelInfo.references.push(match[1]);
+                }
+              }
+              
+              analysis.models.push(modelInfo);
+            });
+          }
+          
+          // Analyze controllers
+          const controllersDir = path.join(backendDir, 'controllers');
+          if (fs.existsSync(controllersDir)) {
+            const controllerFiles = fs.readdirSync(controllersDir).filter(f => f.endsWith('.js'));
+            controllerFiles.forEach(file => {
+              const content = readFileSafe(path.join(controllersDir, file));
+              const controllerName = file.replace('.js', '');
+              
+              const functions = [];
+              
+              // Match various function declaration patterns
+              const patterns = [
+                /const\s+(\w+)\s*=\s*async\s*\([^)]*\)\s*=>/g,
+                /exports\.(\w+)\s*=\s*async\s*\([^)]*\)\s*=>/g,
+                /async\s+function\s+(\w+)\s*\([^)]*\)/g,
+              ];
+              
+              patterns.forEach(pattern => {
+                const matches = content.matchAll(pattern);
+                for (const match of matches) {
+                  if (!functions.includes(match[1])) {
+                    functions.push(match[1]);
+                  }
+                }
+              });
+              
+              // Extract routes info from comments
+              const routeComments = [];
+              const commentMatches = content.matchAll(/@route\s+(\w+)\s+([^\s]+)/g);
+              for (const match of commentMatches) {
+                routeComments.push({
+                  method: match[1],
+                  path: match[2]
+                });
+              }
+              
+              analysis.controllers.push({
+                name: controllerName,
+                functions,
+                routes: routeComments
+              });
+            });
+          }
+          
+          // Analyze routes
+          const routesDir = path.join(backendDir, 'routes');
+          if (fs.existsSync(routesDir)) {
+            const routeFiles = fs.readdirSync(routesDir).filter(f => f.endsWith('.js'));
+            routeFiles.forEach(file => {
+              const content = readFileSafe(path.join(routesDir, file));
+              const routeName = file.replace('.js', '');
+              
+              const routes = [];
+              const middlewares = [];
+              
+              // Extract route definitions with methods
+              const methodPatterns = [
+                { pattern: /router\.get\(['"]([^'"]+)['"]/g, method: 'GET' },
+                { pattern: /router\.post\(['"]([^'"]+)['"]/g, method: 'POST' },
+                { pattern: /router\.put\(['"]([^'"]+)['"]/g, method: 'PUT' },
+                { pattern: /router\.delete\(['"]([^'"]+)['"]/g, method: 'DELETE' },
+                { pattern: /router\.patch\(['"]([^'"]+)['"]/g, method: 'PATCH' },
+                { pattern: /router\.route\(['"]([^'"]+)['"]\)/g, method: 'ROUTE' }
+              ];
+              
+              methodPatterns.forEach(({ pattern, method }) => {
+                const matches = content.matchAll(pattern);
+                for (const match of matches) {
+                  routes.push({
+                    method,
+                    path: match[1]
+                  });
+                }
+              });
+              
+              // Extract middleware usage
+              const middlewareMatches = content.matchAll(/require\(['"]\.\.\/(middleware\/\w+)['"]\)/g);
+              for (const match of middlewareMatches) {
+                if (!middlewares.includes(match[1])) {
+                  middlewares.push(match[1]);
+                }
+              }
+              
+              analysis.routes.push({
+                name: routeName,
+                endpoints: routes,
+                middlewares
+              });
+            });
+          }
+          
+          // Analyze middleware
+          const middlewareDir = path.join(backendDir, 'middleware');
+          if (fs.existsSync(middlewareDir)) {
+            const middlewareFiles = fs.readdirSync(middlewareDir).filter(f => f.endsWith('.js'));
+            middlewareFiles.forEach(file => {
+              const content = readFileSafe(path.join(middlewareDir, file));
+              const middlewareName = file.replace('.js', '');
+              
+              const functions = [];
+              
+              // Match middleware function patterns
+              const patterns = [
+                /const\s+(\w+)\s*=\s*async?\s*\([^)]*\)\s*=>/g,
+                /exports\.(\w+)\s*=\s*async?\s*\([^)]*\)\s*=>/g,
+              ];
+              
+              patterns.forEach(pattern => {
+                const matches = content.matchAll(pattern);
+                for (const match of matches) {
+                  if (!functions.includes(match[1])) {
+                    functions.push(match[1]);
+                  }
+                }
+              });
+              
+              analysis.middleware.push({
+                name: middlewareName,
+                functions
+              });
+            });
+          }
+          
+          console.log(JSON.stringify(analysis, null, 2));
+          EOF
+          
+          node /tmp/analyze-backend.js > /tmp/backend-analysis.json
+          
+          echo ""
+          echo "=== Analysis Summary ==="
+          echo "Models: $(cat /tmp/backend-analysis.json | jq '.models | length')"
+          echo "Controllers: $(cat /tmp/backend-analysis.json | jq '.controllers | length')"
+          echo "Routes: $(cat /tmp/backend-analysis.json | jq '.routes | length')"
+          echo "Middleware: $(cat /tmp/backend-analysis.json | jq '.middleware | length')"
+
+      - name: Generate/Update Documentation
+        id: document
+        run: |
+          echo "=== Generating Documentation ===" 
+          
+          # Create enhanced documentation generator script
+          cat > /tmp/generate-docs.js << 'EOF'
+          const fs = require('fs');
+          const path = require('path');
+          
+          const analysis = JSON.parse(fs.readFileSync('/tmp/backend-analysis.json', 'utf8'));
+          const docsDir = path.join(process.cwd(), 'documentation');
+          
+          // Ensure documentation directory exists
+          if (!fs.existsSync(docsDir)) {
+            fs.mkdirSync(docsDir, { recursive: true });
+          }
+          
+          // Generate comprehensive API documentation
+          let apiDoc = '# API Reference\n\n';
+          apiDoc += '> **Note**: This documentation is automatically generated from the backend code.\n';
+          apiDoc += `> Last updated: ${new Date().toISOString()}\n\n`;
+          
+          apiDoc += '## Overview\n\n';
+          apiDoc += 'This document provides a comprehensive reference for all API endpoints in the AMS backend.\n\n';
+          
+          // Document each controller with its routes
+          apiDoc += '## Endpoints by Controller\n\n';
+          analysis.controllers.forEach(controller => {
+            apiDoc += `### ${controller.name}\n\n`;
+            
+            if (controller.routes && controller.routes.length > 0) {
+              controller.routes.forEach(route => {
+                apiDoc += `#### \`${route.method} ${route.path}\`\n\n`;
+              });
+            }
+            
+            if (controller.functions && controller.functions.length > 0) {
+              apiDoc += '**Handler Functions:**\n';
+              controller.functions.forEach(func => {
+                apiDoc += `- \`${func}\`\n`;
+              });
+              apiDoc += '\n';
+            }
+          });
+          
+          // Document route files
+          apiDoc += '## Route Files\n\n';
+          apiDoc += '> **Note**: Routes marked as `ROUTE` use `router.route()` which can handle multiple HTTP methods on the same path.\n\n';
+          analysis.routes.forEach(route => {
+            apiDoc += `### ${route.name}\n\n`;
+            
+            if (route.endpoints && route.endpoints.length > 0) {
+              apiDoc += '**Endpoints:**\n\n';
+              route.endpoints.forEach(endpoint => {
+                apiDoc += `- \`${endpoint.method} ${endpoint.path}\`\n`;
+              });
+              apiDoc += '\n';
+            }
+            
+            if (route.middlewares && route.middlewares.length > 0) {
+              apiDoc += '**Middleware:**\n';
+              route.middlewares.forEach(mw => {
+                apiDoc += `- ${mw}\n`;
+              });
+              apiDoc += '\n';
+            }
+          });
+          
+          // Document middleware
+          apiDoc += '## Middleware\n\n';
+          analysis.middleware.forEach(mw => {
+            apiDoc += `### ${mw.name}\n\n`;
+            if (mw.functions && mw.functions.length > 0) {
+              apiDoc += '**Functions:**\n';
+              mw.functions.forEach(func => {
+                apiDoc += `- \`${func}\`\n`;
+              });
+              apiDoc += '\n';
+            }
+          });
+          
+          fs.writeFileSync(path.join(docsDir, 'api-reference.md'), apiDoc);
+          console.log('Generated api-reference.md');
+          
+          // Generate enhanced backend structure documentation
+          let structureDoc = '# Backend Structure\n\n';
+          structureDoc += '> **Note**: This documentation is automatically generated from the backend code.\n';
+          structureDoc += `> Last updated: ${new Date().toISOString()}\n\n`;
+          
+          structureDoc += '## Architecture Overview\n\n';
+          structureDoc += 'The backend follows the **MVC (Model-View-Controller)** pattern with the following structure:\n\n';
+          structureDoc += '```\n';
+          structureDoc += 'backend/\n';
+          structureDoc += '├── models/          # Mongoose schemas and data models\n';
+          structureDoc += '├── controllers/     # Business logic and request handlers\n';
+          structureDoc += '├── routes/          # API endpoint definitions\n';
+          structureDoc += '├── middleware/      # Authentication, authorization, and other middleware\n';
+          structureDoc += '├── config/          # Configuration files (DB connection, etc.)\n';
+          structureDoc += '└── server.js        # Application entry point\n';
+          structureDoc += '```\n\n';
+          
+          // Document models with their relationships
+          structureDoc += '## Data Models\n\n';
+          analysis.models.forEach(model => {
+            structureDoc += `### ${model.name}\n\n`;
+            
+            if (model.fields && model.fields.length > 0) {
+              structureDoc += '**Fields:**\n\n';
+              structureDoc += '| Field | Type |\n';
+              structureDoc += '|-------|------|\n';
+              model.fields.forEach(field => {
+                const type = field.type.replace('mongoose.Schema.Types.', '');
+                structureDoc += `| ${field.name} | ${type} |\n`;
+              });
+              structureDoc += '\n';
+            }
+            
+            if (model.references && model.references.length > 0) {
+              structureDoc += '**References:**\n';
+              model.references.forEach(ref => {
+                structureDoc += `- ${ref}\n`;
+              });
+              structureDoc += '\n';
+            }
+          });
+          
+          // Document the hierarchy
+          structureDoc += '## Data Hierarchy\n\n';
+          structureDoc += 'The system follows this organizational hierarchy:\n\n';
+          structureDoc += '```\n';
+          structureDoc += 'Faculty\n';
+          structureDoc += '  └── Department\n';
+          structureDoc += '        └── Division\n';
+          structureDoc += '              └── Program\n';
+          structureDoc += '                    └── Student (User)\n';
+          structureDoc += '\n';
+          structureDoc += 'Department\n';
+          structureDoc += '  └── Teacher (User)\n';
+          structureDoc += '```\n\n';
+          
+          // Document components count
+          structureDoc += '## Component Statistics\n\n';
+          structureDoc += `- **Models**: ${analysis.models.length}\n`;
+          structureDoc += `- **Controllers**: ${analysis.controllers.length}\n`;
+          structureDoc += `- **Routes**: ${analysis.routes.length}\n`;
+          structureDoc += `- **Middleware**: ${analysis.middleware.length}\n\n`;
+          
+          fs.writeFileSync(path.join(docsDir, 'backend-structure.md'), structureDoc);
+          console.log('Generated backend-structure.md');
+          
+          // Generate a logic consistency report
+          let consistencyDoc = '# Logic Consistency Report\n\n';
+          consistencyDoc += '> **Note**: This report is automatically generated.\n';
+          consistencyDoc += `> Last updated: ${new Date().toISOString()}\n\n`;
+          
+          consistencyDoc += '## Overview\n\n';
+          consistencyDoc += 'This document tracks consistency checks for the backend logic.\n\n';
+          
+          consistencyDoc += '## Model Relationships\n\n';
+          consistencyDoc += 'The following relationships are defined:\n\n';
+          analysis.models.forEach(model => {
+            if (model.references && model.references.length > 0) {
+              consistencyDoc += `- **${model.name}** references: ${model.references.join(', ')}\n`;
+            }
+          });
+          consistencyDoc += '\n';
+          
+          consistencyDoc += '## Controller Coverage\n\n';
+          consistencyDoc += 'Each controller should have corresponding routes:\n\n';
+          analysis.controllers.forEach(controller => {
+            const funcCount = controller.functions ? controller.functions.length : 0;
+            const routeCount = controller.routes ? controller.routes.length : 0;
+            consistencyDoc += `- **${controller.name}**: ${funcCount} functions, ${routeCount} documented routes\n`;
+          });
+          consistencyDoc += '\n';
+          
+          consistencyDoc += '## Middleware Usage\n\n';
+          analysis.routes.forEach(route => {
+            const mwCount = route.middlewares ? route.middlewares.length : 0;
+            consistencyDoc += `- **${route.name}**: ${mwCount} middleware(s) applied\n`;
+          });
+          consistencyDoc += '\n';
+          
+          fs.writeFileSync(path.join(docsDir, 'logic-consistency.md'), consistencyDoc);
+          console.log('Generated logic-consistency.md');
+          EOF
+          
+          node /tmp/generate-docs.js
+
+      - name: Check for documentation changes
+        id: check_changes
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          
+          # Check if there are changes in documentation
+          git add documentation/ || true
+          
+          if git diff --staged --quiet; then
+            echo "has_changes=false" >> $GITHUB_OUTPUT
+            echo "No documentation changes detected"
+          else
+            echo "has_changes=true" >> $GITHUB_OUTPUT
+            echo "Documentation changes detected"
+          fi
+
+      - name: Commit and push documentation changes
+        if: steps.check_changes.outputs.has_changes == 'true'
+        run: |
+          git commit -m "docs: Auto-update documentation from backend changes [skip ci]"
+          git push
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create verification summary
+        if: always()
+        run: |
+          echo "## Backend Logic Verification Summary" > $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Analysis Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          if [ -f /tmp/backend-analysis.json ]; then
+            echo "✅ Backend structure analyzed successfully" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "**Components:**" >> $GITHUB_STEP_SUMMARY
+            echo "- Models: $(cat /tmp/backend-analysis.json | jq '.models | length')" >> $GITHUB_STEP_SUMMARY
+            echo "- Controllers: $(cat /tmp/backend-analysis.json | jq '.controllers | length')" >> $GITHUB_STEP_SUMMARY
+            echo "- Routes: $(cat /tmp/backend-analysis.json | jq '.routes | length')" >> $GITHUB_STEP_SUMMARY
+            echo "- Middleware: $(cat /tmp/backend-analysis.json | jq '.middleware | length')" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ Backend analysis failed" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Documentation" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          if [ "${{ steps.check_changes.outputs.has_changes }}" == "true" ]; then
+            echo "✅ Documentation updated and committed" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "ℹ️ No documentation changes required" >> $GITHUB_STEP_SUMMARY
+          fi

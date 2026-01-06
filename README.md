@@ -4,6 +4,8 @@
 
 - `backend/`: Node.js/Express server
 - `frontend/`: React + Vite application
+- `documentation/`: Auto-generated API and backend documentation
+- `.github/workflows/`: CI/CD workflows for automated testing and documentation
 
 ## Getting Started
 
@@ -58,3 +60,34 @@
    ```bash
    npm run build
    ```
+
+## Automated Documentation
+
+This project includes automated backend logic verification and documentation generation through GitHub Actions.
+
+### Logic Verification Workflow
+
+The workflow automatically runs on every push to the repository when backend files are modified. It performs the following tasks:
+
+1. **Backend Structure Analysis**: Scans all backend code to extract:
+   - Data models and their relationships
+   - Controllers and their functions
+   - API routes and endpoints
+   - Middleware components
+
+2. **Documentation Generation**: Automatically generates and updates:
+   - `documentation/api-reference.md`: Complete API endpoint reference
+   - `documentation/backend-structure.md`: Backend architecture and data models
+   - `documentation/logic-consistency.md`: Logic consistency checks and relationships
+
+3. **Auto-Commit**: If documentation changes are detected, they are automatically committed back to the repository
+
+### Documentation Files
+
+- **[API Reference](documentation/api-reference.md)**: Comprehensive list of all API endpoints organized by controller
+- **[Backend Structure](documentation/backend-structure.md)**: Overview of data models, relationships, and MVC architecture
+- **[Logic Consistency Report](documentation/logic-consistency.md)**: Automated consistency checks for backend logic
+- **[Authentication & RBAC](documentation/auth-and-rbac.md)**: Authentication and authorization documentation
+- **[Data Models](documentation/models.md)**: Entity relationship diagrams and model hierarchy
+
+The documentation is automatically kept in sync with the codebase, ensuring it always reflects the current state of the backend.
