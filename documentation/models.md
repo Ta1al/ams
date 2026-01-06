@@ -26,7 +26,7 @@ classDiagram
     class User {
         +ObjectId _id
         +String name
-        +String email
+        +String username
         +String password
         +String role
         +ObjectId program
@@ -112,7 +112,7 @@ erDiagram
     USER {
         ObjectId _id
         String name
-        String email
+        String username
         String role
     }
 ```
