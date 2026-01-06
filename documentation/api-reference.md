@@ -1,7 +1,7 @@
 # API Reference
 
 > **Note**: This documentation is automatically generated from the backend code.
-> Last updated: 2026-01-06T18:10:32.608Z
+> Last updated: 2026-01-06T20:01:34.369Z
 
 ## Overview
 
@@ -55,6 +55,25 @@ This document provides a comprehensive reference for all API endpoints in the AM
 - `createFaculty`
 - `deleteFaculty`
 
+### programController
+
+#### `GET /api/programs`
+
+#### `POST /api/programs`
+
+#### `PUT /api/programs/:id`
+
+#### `DELETE /api/programs/:id`
+
+#### `GET /api/programs/divisions`
+
+**Handler Functions:**
+- `getPrograms`
+- `createProgram`
+- `updateProgram`
+- `deleteProgram`
+- `getDivisions`
+
 ### userController
 
 #### `GET /api/users`
@@ -107,6 +126,17 @@ This document provides a comprehensive reference for all API endpoints in the AM
 
 **Endpoints:**
 
+- `ROUTE /`
+- `ROUTE /:id`
+
+**Middleware:**
+- middleware/authMiddleware
+
+### programRoutes
+
+**Endpoints:**
+
+- `GET /divisions`
 - `ROUTE /`
 - `ROUTE /:id`
 

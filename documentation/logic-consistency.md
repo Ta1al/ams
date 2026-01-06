@@ -1,7 +1,7 @@
 # Logic Consistency Report
 
 > **Note**: This report is automatically generated.
-> Last updated: 2026-01-06T18:10:32.614Z
+> Last updated: 2026-01-06T20:01:34.374Z
 
 ## Overview
 
@@ -25,6 +25,7 @@ Each controller should have corresponding routes:
 - **courseController**: 5 functions, 5 documented routes
 - **dashboardController**: 1 functions, 1 documented routes
 - **facultyController**: 3 functions, 3 documented routes
+- **programController**: 5 functions, 5 documented routes
 - **userController**: 5 functions, 5 documented routes
 
 ## Middleware Usage
@@ -33,5 +34,6 @@ Each controller should have corresponding routes:
 - **courseRoutes**: 1 middleware(s) applied
 - **dashboardRoutes**: 1 middleware(s) applied
 - **facultyRoutes**: 1 middleware(s) applied
+- **programRoutes**: 1 middleware(s) applied
 - **userRoutes**: 1 middleware(s) applied
 
