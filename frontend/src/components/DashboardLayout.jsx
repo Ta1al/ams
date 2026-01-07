@@ -104,7 +104,7 @@ const DashboardLayout = ({ children }) => {
           <div className="p-4 border-b border-base-200">
             <div className="flex items-center gap-3">
               <div className="avatar placeholder">
-                <div className="bg-primary text-primary-content rounded-full w-10">
+                <div className="bg-primary text-primary-content rounded-full w-10 h-10 flex items-center justify-center">
                   <span className="text-lg">{user?.name?.charAt(0)?.toUpperCase()}</span>
                 </div>
               </div>
