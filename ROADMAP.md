@@ -230,7 +230,7 @@ Not Started:      15
 8. ✅ Attendance & grade reports
 9. ✅ File upload for assignments
 
-### Nice to Have - 10-14 hours total
+### Nice to Have - 10-17 hours total
 10. ✅ Advanced search and filtering
 11. ✅ Enhanced dashboard analytics
 12. ✅ Comprehensive test coverage
