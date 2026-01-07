@@ -1,7 +1,6 @@
 # Architecture Diagrams
 
 > **Note**: This document contains Mermaid diagrams showing the system architecture and logic flow.
-> Last updated: ${new Date().toISOString()}
 
 ## System Architecture
 
