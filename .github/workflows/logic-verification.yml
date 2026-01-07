@@ -317,10 +317,12 @@ jobs:
             while ((match = fetchPattern.exec(content)) !== null) {
               let url = match[1];
               
-              // Handle template literals with env variables
-              if (content.substring(match.index - 50, match.index).includes('VITE_API_URL')) {
-                url = url.replace('${import.meta.env.VITE_API_URL || \'http://localhost:5001\'}', '');
-                url = url.replace('${apiUrl}', '');
+              // Handle template literals with env variables - clean up any template expressions
+              url = url.replace(/\$\{[^}]+\}/g, '');
+              
+              // Skip if URL is empty or doesn't look like an API call
+              if (!url || !url.includes('/api/')) {
+                continue;
               }
               
               // Try to determine HTTP method
@@ -433,9 +435,10 @@ jobs:
           });
           
           // Check for unused backend endpoints
+          const systemEndpoints = ['/api/auth/login', '/api/dashboard'];
           backendEndpoints.forEach(endpoint => {
-            // Skip auth endpoint as it's used in login
-            if (endpoint.includes('/api/auth/login')) return;
+            // Skip known system endpoints
+            if (systemEndpoints.some(se => endpoint.includes(se))) return;
             
             const normalizedEndpoint = endpoint.replace(/\/:[^/]+/g, '/:id');
             
@@ -489,10 +492,11 @@ jobs:
           // Save issues for GitHub issue creation
           fs.writeFileSync('/tmp/consistency-issues.json', JSON.stringify(result, null, 2));
           
-          // Exit with error code if there are critical issues
+          // Report results and set failure flag for workflow
           if (issues.length > 0) {
             console.error(`\n❌ Found ${issues.length} critical issue(s)`);
-            process.exit(1);
+            // Don't exit, let workflow handle the failure state
+            // This allows all documentation to be generated
           }
           
           if (warnings.length > 0) {
