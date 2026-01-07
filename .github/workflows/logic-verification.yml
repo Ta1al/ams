@@ -1,4 +1,4 @@
-name: Backend Logic Verification and Documentation
+name: Full-Stack Logic Verification and Documentation
 
 on:
   push:
@@ -6,6 +6,7 @@ on:
       - '**'
     paths:
       - 'backend/**'
+      - 'frontend/**'
       - '.github/workflows/logic-verification.yml'
 
 permissions:
@@ -231,6 +232,357 @@ jobs:
           echo "Routes: $(cat /tmp/backend-analysis.json | jq '.routes | length')"
           echo "Middleware: $(cat /tmp/backend-analysis.json | jq '.middleware | length')"
 
+      - name: Analyze Frontend Structure
+        id: analyze-frontend
+        run: |
+          echo "=== Analyzing Frontend Structure ===" 
+          
+          # Create frontend analysis script
+          cat > /tmp/analyze-frontend.js << 'EOF'
+          const fs = require('fs');
+          const path = require('path');
+          
+          const frontendDir = path.join(process.cwd(), 'frontend', 'src');
+          const analysis = {
+            pages: [],
+            components: [],
+            routes: [],
+            apiCalls: [],
+            authChecks: []
+          };
+          
+          // Helper to read file safely
+          function readFileSafe(filePath) {
+            try {
+              return fs.readFileSync(filePath, 'utf8');
+            } catch (e) {
+              return '';
+            }
+          }
+          
+          // Recursively find all JSX files
+          function findJSXFiles(dir) {
+            const files = [];
+            if (!fs.existsSync(dir)) return files;
+            
+            const items = fs.readdirSync(dir);
+            items.forEach(item => {
+              const fullPath = path.join(dir, item);
+              const stat = fs.statSync(fullPath);
+              if (stat.isDirectory()) {
+                files.push(...findJSXFiles(fullPath));
+              } else if (item.endsWith('.jsx') || item.endsWith('.js')) {
+                files.push(fullPath);
+              }
+            });
+            return files;
+          }
+          
+          // Analyze App.jsx for routes
+          const appFile = path.join(frontendDir, 'App.jsx');
+          if (fs.existsSync(appFile)) {
+            const content = readFileSafe(appFile);
+            
+            // Extract routes with their protection
+            const routePattern = /<Route\s+path=["']([^"']+)["'][\s\S]*?element=\{[\s\S]*?<(\w+)/g;
+            let match;
+            while ((match = routePattern.exec(content)) !== null) {
+              const routePath = match[1];
+              const component = match[2];
+              
+              // Check if route is protected and what roles are allowed
+              const routeSnippet = content.substring(match.index, match.index + 500);
+              const isProtected = routeSnippet.includes('ProtectedRoute');
+              const rolesMatch = routeSnippet.match(/allowedRoles=\{?\[([^\]]+)\]\}?/);
+              const roles = rolesMatch ? rolesMatch[1].replace(/['"]/g, '').split(',').map(r => r.trim()) : [];
+              
+              analysis.routes.push({
+                path: routePath,
+                component,
+                protected: isProtected,
+                allowedRoles: roles
+              });
+            }
+          }
+          
+          // Analyze all JSX files for API calls
+          const allFiles = findJSXFiles(frontendDir);
+          allFiles.forEach(filePath => {
+            const content = readFileSafe(filePath);
+            const relativePath = path.relative(frontendDir, filePath);
+            
+            // Find fetch calls
+            const fetchPattern = /fetch\([`'"]([^`'"]+)[`'"]/g;
+            let match;
+            while ((match = fetchPattern.exec(content)) !== null) {
+              let url = match[1];
+              
+              // Handle template literals with env variables
+              if (content.substring(match.index - 50, match.index).includes('VITE_API_URL')) {
+                url = url.replace('${import.meta.env.VITE_API_URL || \'http://localhost:5001\'}', '');
+                url = url.replace('${apiUrl}', '');
+              }
+              
+              // Try to determine HTTP method
+              const callContext = content.substring(match.index - 100, match.index + 200);
+              let method = 'GET';
+              if (callContext.includes('method:') || callContext.includes('method :')) {
+                if (callContext.match(/method:\s*['"]POST['"]/i)) method = 'POST';
+                else if (callContext.match(/method:\s*['"]PUT['"]/i)) method = 'PUT';
+                else if (callContext.match(/method:\s*['"]DELETE['"]/i)) method = 'DELETE';
+                else if (callContext.match(/method:\s*['"]PATCH['"]/i)) method = 'PATCH';
+              }
+              
+              analysis.apiCalls.push({
+                file: relativePath,
+                method,
+                endpoint: url,
+                line: content.substring(0, match.index).split('\n').length
+              });
+            }
+            
+            // Find ProtectedRoute usage
+            if (content.includes('ProtectedRoute') && !relativePath.includes('ProtectedRoute.jsx')) {
+              const protectedMatches = content.match(/allowedRoles=\{?\[([^\]]+)\]\}?/g);
+              if (protectedMatches) {
+                protectedMatches.forEach(m => {
+                  analysis.authChecks.push({
+                    file: relativePath,
+                    roles: m
+                  });
+                });
+              }
+            }
+            
+            // Categorize files
+            if (relativePath.startsWith('pages/')) {
+              analysis.pages.push(relativePath);
+            } else if (relativePath.startsWith('components/')) {
+              analysis.components.push(relativePath);
+            }
+          });
+          
+          console.log(JSON.stringify(analysis, null, 2));
+          EOF
+          
+          node /tmp/analyze-frontend.js > /tmp/frontend-analysis.json
+          
+          echo ""
+          echo "=== Frontend Analysis Summary ==="
+          echo "Pages: $(cat /tmp/frontend-analysis.json | jq '.pages | length')"
+          echo "Components: $(cat /tmp/frontend-analysis.json | jq '.components | length')"
+          echo "Routes: $(cat /tmp/frontend-analysis.json | jq '.routes | length')"
+          echo "API Calls: $(cat /tmp/frontend-analysis.json | jq '.apiCalls | length')"
+
+      - name: Cross-Verify Backend and Frontend Logic
+        id: verify-consistency
+        run: |
+          echo "=== Verifying Logic Consistency ===" 
+          
+          # Create consistency verification script
+          cat > /tmp/verify-consistency.js << 'EOF'
+          const fs = require('fs');
+          const path = require('path');
+          
+          const backendAnalysis = JSON.parse(fs.readFileSync('/tmp/backend-analysis.json', 'utf8'));
+          const frontendAnalysis = JSON.parse(fs.readFileSync('/tmp/frontend-analysis.json', 'utf8'));
+          
+          const issues = [];
+          const warnings = [];
+          
+          // Extract all backend endpoints
+          const backendEndpoints = new Set();
+          backendAnalysis.routes.forEach(route => {
+            route.endpoints.forEach(endpoint => {
+              const key = `${endpoint.method} ${endpoint.path}`;
+              backendEndpoints.add(key);
+            });
+          });
+          
+          // Extract frontend API calls
+          const frontendCalls = new Map();
+          frontendAnalysis.apiCalls.forEach(call => {
+            const key = `${call.method} ${call.endpoint}`;
+            if (!frontendCalls.has(key)) {
+              frontendCalls.set(key, []);
+            }
+            frontendCalls.get(key).push(call.file);
+          });
+          
+          // Check for frontend calls to non-existent backend endpoints
+          frontendCalls.forEach((files, endpoint) => {
+            // Normalize endpoint for comparison
+            const normalizedEndpoint = endpoint.replace(/\/:[^/]+/g, '/:id');
+            
+            let found = false;
+            backendEndpoints.forEach(backendEp => {
+              const normalizedBackend = backendEp.replace(/\/:[^/]+/g, '/:id');
+              if (normalizedEndpoint === normalizedBackend) {
+                found = true;
+              }
+            });
+            
+            if (!found && !endpoint.includes('undefined') && endpoint.includes('/api/')) {
+              issues.push({
+                type: 'missing_backend_endpoint',
+                severity: 'error',
+                message: `Frontend calls endpoint that doesn't exist in backend: ${endpoint}`,
+                files: files.join(', ')
+              });
+            }
+          });
+          
+          // Check for unused backend endpoints
+          backendEndpoints.forEach(endpoint => {
+            // Skip auth endpoint as it's used in login
+            if (endpoint.includes('/api/auth/login')) return;
+            
+            const normalizedEndpoint = endpoint.replace(/\/:[^/]+/g, '/:id');
+            
+            let found = false;
+            frontendCalls.forEach((files, frontendEp) => {
+              const normalizedFrontend = frontendEp.replace(/\/:[^/]+/g, '/:id');
+              if (normalizedEndpoint === normalizedFrontend) {
+                found = true;
+              }
+            });
+            
+            if (!found) {
+              warnings.push({
+                type: 'unused_backend_endpoint',
+                severity: 'warning',
+                message: `Backend endpoint not used by frontend: ${endpoint}`
+              });
+            }
+          });
+          
+          // Check role consistency
+          const backendRoles = new Set(['admin', 'teacher', 'student']);
+          frontendAnalysis.routes.forEach(route => {
+            route.allowedRoles.forEach(role => {
+              if (!backendRoles.has(role)) {
+                issues.push({
+                  type: 'invalid_role',
+                  severity: 'error',
+                  message: `Frontend route ${route.path} uses invalid role: ${role}`,
+                  route: route.path
+                });
+              }
+            });
+          });
+          
+          // Output results
+          const result = {
+            issues,
+            warnings,
+            summary: {
+              totalIssues: issues.length,
+              totalWarnings: warnings.length,
+              backendEndpoints: backendEndpoints.size,
+              frontendApiCalls: frontendCalls.size,
+              matchedEndpoints: backendEndpoints.size - warnings.filter(w => w.type === 'unused_backend_endpoint').length
+            }
+          };
+          
+          console.log(JSON.stringify(result, null, 2));
+          
+          // Save issues for GitHub issue creation
+          fs.writeFileSync('/tmp/consistency-issues.json', JSON.stringify(result, null, 2));
+          
+          // Exit with error code if there are critical issues
+          if (issues.length > 0) {
+            console.error(`\n❌ Found ${issues.length} critical issue(s)`);
+            process.exit(1);
+          }
+          
+          if (warnings.length > 0) {
+            console.warn(`\n⚠️  Found ${warnings.length} warning(s)`);
+          }
+          
+          console.log('\n✅ No critical consistency issues found');
+          EOF
+          
+          node /tmp/verify-consistency.js || echo "CONSISTENCY_CHECK_FAILED=true" >> $GITHUB_OUTPUT
+
+      - name: Create GitHub Issue for Inconsistencies
+        if: steps.verify-consistency.outputs.CONSISTENCY_CHECK_FAILED == 'true'
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const fs = require('fs');
+            const issues = JSON.parse(fs.readFileSync('/tmp/consistency-issues.json', 'utf8'));
+            
+            if (issues.issues.length === 0 && issues.warnings.length === 0) {
+              console.log('No issues to report');
+              return;
+            }
+            
+            let body = '## Logic Consistency Issues Detected\n\n';
+            body += `This issue was automatically generated by the logic verification workflow.\n\n`;
+            body += `**Commit**: ${context.sha.substring(0, 7)}\n`;
+            body += `**Branch**: ${context.ref.replace('refs/heads/', '')}\n\n`;
+            
+            if (issues.issues.length > 0) {
+              body += '### 🔴 Critical Issues\n\n';
+              issues.issues.forEach((issue, idx) => {
+                body += `${idx + 1}. **${issue.type}**\n`;
+                body += `   - ${issue.message}\n`;
+                if (issue.files) body += `   - Files: ${issue.files}\n`;
+                if (issue.route) body += `   - Route: ${issue.route}\n`;
+                body += '\n';
+              });
+            }
+            
+            if (issues.warnings.length > 0) {
+              body += '### ⚠️ Warnings\n\n';
+              issues.warnings.forEach((warning, idx) => {
+                body += `${idx + 1}. **${warning.type}**\n`;
+                body += `   - ${warning.message}\n`;
+                body += '\n';
+              });
+            }
+            
+            body += '\n### Summary\n\n';
+            body += `- Backend Endpoints: ${issues.summary.backendEndpoints}\n`;
+            body += `- Frontend API Calls: ${issues.summary.frontendApiCalls}\n`;
+            body += `- Matched Endpoints: ${issues.summary.matchedEndpoints}\n`;
+            body += `- Total Issues: ${issues.summary.totalIssues}\n`;
+            body += `- Total Warnings: ${issues.summary.totalWarnings}\n`;
+            
+            body += '\n---\n';
+            body += 'Please review and fix these inconsistencies to ensure the frontend and backend are in sync.';
+            
+            // Check if there's already an open issue for logic consistency
+            const existingIssues = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              labels: 'logic-consistency',
+              per_page: 1
+            });
+            
+            if (existingIssues.data.length > 0) {
+              // Update existing issue
+              await github.rest.issues.update({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: existingIssues.data[0].number,
+                body: body
+              });
+              console.log(`Updated existing issue #${existingIssues.data[0].number}`);
+            } else {
+              // Create new issue
+              await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: '🔍 Frontend-Backend Logic Inconsistency Detected',
+                body: body,
+                labels: ['logic-consistency', 'bug', 'automated']
+              });
+              console.log('Created new issue for logic inconsistencies');
+            }
+
       - name: Generate/Update Documentation
         id: document
         run: |
@@ -242,7 +594,16 @@ jobs:
           const path = require('path');
           
           const analysis = JSON.parse(fs.readFileSync('/tmp/backend-analysis.json', 'utf8'));
+          const frontendAnalysis = JSON.parse(fs.readFileSync('/tmp/frontend-analysis.json', 'utf8'));
           const docsDir = path.join(process.cwd(), 'documentation');
+          
+          // Load consistency check results if available
+          let consistencyResults = { issues: [], warnings: [], summary: {} };
+          try {
+            consistencyResults = JSON.parse(fs.readFileSync('/tmp/consistency-issues.json', 'utf8'));
+          } catch (e) {
+            // File may not exist if no issues found
+          }
           
           // Ensure documentation directory exists
           if (!fs.existsSync(docsDir)) {
@@ -382,15 +743,21 @@ jobs:
           fs.writeFileSync(path.join(docsDir, 'backend-structure.md'), structureDoc);
           console.log('Generated backend-structure.md');
           
-          // Generate a logic consistency report
-          let consistencyDoc = '# Logic Consistency Report\n\n';
-          consistencyDoc += '> **Note**: This report is automatically generated.\n';
+          // Generate a comprehensive logic consistency report
+          let consistencyDoc = '# Full-Stack Logic Consistency Report\n\n';
+          consistencyDoc += '> **Note**: This report is automatically generated and includes both backend and frontend analysis.\n';
           consistencyDoc += `> Last updated: ${new Date().toISOString()}\n\n`;
           
           consistencyDoc += '## Overview\n\n';
-          consistencyDoc += 'This document tracks consistency checks for the backend logic.\n\n';
+          consistencyDoc += 'This document tracks consistency checks across the entire application stack, including:\n';
+          consistencyDoc += '- Backend logic consistency\n';
+          consistencyDoc += '- Frontend structure and routes\n';
+          consistencyDoc += '- Frontend-Backend integration consistency\n\n';
           
-          consistencyDoc += '## Model Relationships\n\n';
+          // Backend Analysis
+          consistencyDoc += '## Backend Analysis\n\n';
+          
+          consistencyDoc += '### Model Relationships\n\n';
           consistencyDoc += 'The following relationships are defined:\n\n';
           analysis.models.forEach(model => {
             if (model.references && model.references.length > 0) {
@@ -399,7 +766,7 @@ jobs:
           });
           consistencyDoc += '\n';
           
-          consistencyDoc += '## Controller Coverage\n\n';
+          consistencyDoc += '### Controller Coverage\n\n';
           consistencyDoc += 'Each controller should have corresponding routes:\n\n';
           analysis.controllers.forEach(controller => {
             const funcCount = controller.functions ? controller.functions.length : 0;
@@ -408,15 +775,161 @@ jobs:
           });
           consistencyDoc += '\n';
           
-          consistencyDoc += '## Middleware Usage\n\n';
+          consistencyDoc += '### Middleware Usage\n\n';
           analysis.routes.forEach(route => {
             const mwCount = route.middlewares ? route.middlewares.length : 0;
             consistencyDoc += `- **${route.name}**: ${mwCount} middleware(s) applied\n`;
           });
           consistencyDoc += '\n';
           
+          // Frontend Analysis
+          consistencyDoc += '## Frontend Analysis\n\n';
+          
+          consistencyDoc += '### Component Statistics\n\n';
+          consistencyDoc += `- **Pages**: ${frontendAnalysis.pages.length}\n`;
+          consistencyDoc += `- **Components**: ${frontendAnalysis.components.length}\n`;
+          consistencyDoc += `- **Routes**: ${frontendAnalysis.routes.length}\n`;
+          consistencyDoc += `- **API Calls**: ${frontendAnalysis.apiCalls.length}\n\n`;
+          
+          consistencyDoc += '### Frontend Routes\n\n';
+          consistencyDoc += '| Path | Component | Protected | Allowed Roles |\n';
+          consistencyDoc += '|------|-----------|-----------|---------------|\n';
+          frontendAnalysis.routes.forEach(route => {
+            const roles = route.allowedRoles.length > 0 ? route.allowedRoles.join(', ') : 'All authenticated';
+            const protected = route.protected ? '✅' : '❌';
+            consistencyDoc += `| ${route.path} | ${route.component} | ${protected} | ${roles} |\n`;
+          });
+          consistencyDoc += '\n';
+          
+          consistencyDoc += '### API Calls by File\n\n';
+          const apiCallsByFile = {};
+          frontendAnalysis.apiCalls.forEach(call => {
+            if (!apiCallsByFile[call.file]) {
+              apiCallsByFile[call.file] = [];
+            }
+            apiCallsByFile[call.file].push(`${call.method} ${call.endpoint}`);
+          });
+          
+          Object.keys(apiCallsByFile).sort().forEach(file => {
+            consistencyDoc += `**${file}**:\n`;
+            apiCallsByFile[file].forEach(call => {
+              consistencyDoc += `- ${call}\n`;
+            });
+            consistencyDoc += '\n';
+          });
+          
+          // Frontend-Backend Consistency
+          consistencyDoc += '## Frontend-Backend Consistency Check\n\n';
+          
+          if (consistencyResults.summary.totalIssues !== undefined) {
+            consistencyDoc += '### Summary\n\n';
+            consistencyDoc += `- Backend Endpoints: ${consistencyResults.summary.backendEndpoints || 0}\n`;
+            consistencyDoc += `- Frontend API Calls: ${consistencyResults.summary.frontendApiCalls || 0}\n`;
+            consistencyDoc += `- Matched Endpoints: ${consistencyResults.summary.matchedEndpoints || 0}\n`;
+            consistencyDoc += `- Issues Found: ${consistencyResults.summary.totalIssues || 0}\n`;
+            consistencyDoc += `- Warnings: ${consistencyResults.summary.totalWarnings || 0}\n\n`;
+            
+            if (consistencyResults.issues.length > 0) {
+              consistencyDoc += '### 🔴 Critical Issues\n\n';
+              consistencyResults.issues.forEach((issue, idx) => {
+                consistencyDoc += `${idx + 1}. **${issue.type}**: ${issue.message}\n`;
+                if (issue.files) consistencyDoc += `   - Files: ${issue.files}\n`;
+                if (issue.route) consistencyDoc += `   - Route: ${issue.route}\n`;
+              });
+              consistencyDoc += '\n';
+            }
+            
+            if (consistencyResults.warnings.length > 0) {
+              consistencyDoc += '### ⚠️ Warnings\n\n';
+              consistencyResults.warnings.forEach((warning, idx) => {
+                consistencyDoc += `${idx + 1}. **${warning.type}**: ${warning.message}\n`;
+              });
+              consistencyDoc += '\n';
+            }
+            
+            if (consistencyResults.issues.length === 0 && consistencyResults.warnings.length === 0) {
+              consistencyDoc += '✅ **All consistency checks passed!** No issues or warnings found.\n\n';
+            }
+          } else {
+            consistencyDoc += '✅ **All consistency checks passed!** No issues or warnings found.\n\n';
+          }
+          
+          consistencyDoc += '## Recommendations\n\n';
+          consistencyDoc += '1. Ensure all frontend API calls map to existing backend endpoints\n';
+          consistencyDoc += '2. Remove unused backend endpoints or document why they exist\n';
+          consistencyDoc += '3. Verify that role-based access control is consistent across frontend and backend\n';
+          consistencyDoc += '4. Keep authentication logic synchronized between frontend (ProtectedRoute) and backend (middleware)\n';
+          
           fs.writeFileSync(path.join(docsDir, 'logic-consistency.md'), consistencyDoc);
           console.log('Generated logic-consistency.md');
+          
+          // Generate frontend-specific documentation
+          let frontendDoc = '# Frontend Structure\n\n';
+          frontendDoc += '> **Note**: This documentation is automatically generated from the frontend code.\n';
+          frontendDoc += `> Last updated: ${new Date().toISOString()}\n\n`;
+          
+          frontendDoc += '## Architecture Overview\n\n';
+          frontendDoc += 'The frontend is built with React and follows a component-based architecture:\n\n';
+          frontendDoc += '```\n';
+          frontendDoc += 'frontend/src/\n';
+          frontendDoc += '├── pages/           # Page components (routes)\n';
+          frontendDoc += '├── components/      # Reusable components\n';
+          frontendDoc += '├── context/         # React Context (AuthContext)\n';
+          frontendDoc += '├── hooks/           # Custom React hooks\n';
+          frontendDoc += '├── assets/          # Static assets\n';
+          frontendDoc += '└── App.jsx          # Main app with routes\n';
+          frontendDoc += '```\n\n';
+          
+          frontendDoc += '## Routing\n\n';
+          frontendDoc += 'The application uses React Router for client-side routing:\n\n';
+          frontendDoc += '| Route | Component | Access Control |\n';
+          frontendDoc += '|-------|-----------|----------------|\n';
+          frontendAnalysis.routes.forEach(route => {
+            let access = 'Public';
+            if (route.protected) {
+              access = route.allowedRoles.length > 0 ? route.allowedRoles.join(', ') : 'All authenticated';
+            }
+            frontendDoc += `| ${route.path} | ${route.component} | ${access} |\n`;
+          });
+          frontendDoc += '\n';
+          
+          frontendDoc += '## Pages\n\n';
+          frontendDoc += 'Total pages: ' + frontendAnalysis.pages.length + '\n\n';
+          frontendAnalysis.pages.forEach(page => {
+            frontendDoc += `- ${page}\n`;
+          });
+          frontendDoc += '\n';
+          
+          frontendDoc += '## Components\n\n';
+          frontendDoc += 'Total components: ' + frontendAnalysis.components.length + '\n\n';
+          frontendAnalysis.components.forEach(component => {
+            frontendDoc += `- ${component}\n`;
+          });
+          frontendDoc += '\n';
+          
+          frontendDoc += '## API Integration\n\n';
+          frontendDoc += 'The frontend communicates with the backend using the Fetch API.\n\n';
+          frontendDoc += `Total API calls: ${frontendAnalysis.apiCalls.length}\n\n`;
+          
+          frontendDoc += '### API Endpoints Used\n\n';
+          const uniqueEndpoints = new Set();
+          frontendAnalysis.apiCalls.forEach(call => {
+            uniqueEndpoints.add(`${call.method} ${call.endpoint}`);
+          });
+          
+          Array.from(uniqueEndpoints).sort().forEach(endpoint => {
+            frontendDoc += `- ${endpoint}\n`;
+          });
+          frontendDoc += '\n';
+          
+          frontendDoc += '## Authentication\n\n';
+          frontendDoc += '- **Context**: AuthContext provides authentication state\n';
+          frontendDoc += '- **Storage**: User data and token stored in localStorage\n';
+          frontendDoc += '- **Protected Routes**: ProtectedRoute component enforces authentication\n';
+          frontendDoc += '- **Roles**: admin, teacher, student\n\n';
+          
+          fs.writeFileSync(path.join(docsDir, 'frontend-structure.md'), frontendDoc);
+          console.log('Generated frontend-structure.md');
           EOF
           
           node /tmp/generate-docs.js
@@ -441,7 +954,7 @@ jobs:
       - name: Commit and push documentation changes
         if: steps.check_changes.outputs.has_changes == 'true'
         run: |
-          git commit -m "docs: Auto-update documentation from backend changes [skip ci]"
+          git commit -m "docs: Auto-update documentation from code changes [skip ci]"
           git push
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -449,9 +962,9 @@ jobs:
       - name: Create verification summary
         if: always()
         run: |
-          echo "## Backend Logic Verification Summary" > $GITHUB_STEP_SUMMARY
+          echo "## Full-Stack Logic Verification Summary" > $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "### Analysis Results" >> $GITHUB_STEP_SUMMARY
+          echo "### Backend Analysis" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           
           if [ -f /tmp/backend-analysis.json ]; then
@@ -464,6 +977,46 @@ jobs:
             echo "- Middleware: $(cat /tmp/backend-analysis.json | jq '.middleware | length')" >> $GITHUB_STEP_SUMMARY
           else
             echo "❌ Backend analysis failed" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Frontend Analysis" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          if [ -f /tmp/frontend-analysis.json ]; then
+            echo "✅ Frontend structure analyzed successfully" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "**Components:**" >> $GITHUB_STEP_SUMMARY
+            echo "- Pages: $(cat /tmp/frontend-analysis.json | jq '.pages | length')" >> $GITHUB_STEP_SUMMARY
+            echo "- Components: $(cat /tmp/frontend-analysis.json | jq '.components | length')" >> $GITHUB_STEP_SUMMARY
+            echo "- Routes: $(cat /tmp/frontend-analysis.json | jq '.routes | length')" >> $GITHUB_STEP_SUMMARY
+            echo "- API Calls: $(cat /tmp/frontend-analysis.json | jq '.apiCalls | length')" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ Frontend analysis failed" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Consistency Check" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          if [ -f /tmp/consistency-issues.json ]; then
+            ISSUES=$(cat /tmp/consistency-issues.json | jq '.issues | length')
+            WARNINGS=$(cat /tmp/consistency-issues.json | jq '.warnings | length')
+            
+            if [ "$ISSUES" -eq "0" ] && [ "$WARNINGS" -eq "0" ]; then
+              echo "✅ All consistency checks passed!" >> $GITHUB_STEP_SUMMARY
+            else
+              if [ "$ISSUES" -gt "0" ]; then
+                echo "🔴 Found $ISSUES critical issue(s)" >> $GITHUB_STEP_SUMMARY
+              fi
+              if [ "$WARNINGS" -gt "0" ]; then
+                echo "⚠️  Found $WARNINGS warning(s)" >> $GITHUB_STEP_SUMMARY
+              fi
+              echo "" >> $GITHUB_STEP_SUMMARY
+              echo "A GitHub issue has been created/updated with details." >> $GITHUB_STEP_SUMMARY
+            fi
+          else
+            echo "✅ All consistency checks passed!" >> $GITHUB_STEP_SUMMARY
           fi
           
           echo "" >> $GITHUB_STEP_SUMMARY
