@@ -40,7 +40,7 @@ const getDashboardStats = async (req, res) => {
       role,
       user: {
         name: req.user.name,
-        email: req.user.email,
+        username: req.user.username,
       },
       stats,
     });
