@@ -1,7 +1,7 @@
 # API Reference
 
 > **Note**: This documentation is automatically generated from the backend code.
-> Last updated: 2026-01-06T20:01:34.369Z
+> Last updated: 2026-01-07T15:52:52.647Z
 
 ## Overview
 
@@ -41,6 +41,32 @@ This document provides a comprehensive reference for all API endpoints in the AM
 
 **Handler Functions:**
 - `getDashboardStats`
+
+### departmentController
+
+#### `GET /api/departments`
+
+#### `POST /api/departments`
+
+#### `DELETE /api/departments/:id`
+
+**Handler Functions:**
+- `getDepartments`
+- `createDepartment`
+- `deleteDepartment`
+
+### divisionController
+
+#### `GET /api/divisions`
+
+#### `POST /api/divisions`
+
+#### `DELETE /api/divisions/:id`
+
+**Handler Functions:**
+- `getDivisions`
+- `createDivision`
+- `deleteDivision`
 
 ### facultyController
 
@@ -118,6 +144,26 @@ This document provides a comprehensive reference for all API endpoints in the AM
 **Endpoints:**
 
 - `GET /stats`
+
+**Middleware:**
+- middleware/authMiddleware
+
+### departmentRoutes
+
+**Endpoints:**
+
+- `ROUTE /`
+- `ROUTE /:id`
+
+**Middleware:**
+- middleware/authMiddleware
+
+### divisionRoutes
+
+**Endpoints:**
+
+- `ROUTE /`
+- `ROUTE /:id`
 
 **Middleware:**
 - middleware/authMiddleware
