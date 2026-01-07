@@ -14,6 +14,8 @@ const UsersPage = () => {
   const [selectedUser, setSelectedUser] = useState(null);
   const [deleteConfirm, setDeleteConfirm] = useState(null);
 
+  const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5001';
+
   const fetchUsers = useCallback(async () => {
     try {
       const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5001'}/api/users`, {
@@ -37,7 +39,6 @@ const UsersPage = () => {
   }, [fetchUsers]);
 
   const handleSaveUser = async (formData) => {
-    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5001';
     const url = selectedUser
       ? `${apiUrl}/api/users/${selectedUser._id}`
       : `${apiUrl}/api/users`;
@@ -63,7 +64,6 @@ const UsersPage = () => {
 
   const handleDeleteUser = async (userId) => {
     try {
-      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5001';
       const response = await fetch(`${apiUrl}/api/users/${userId}`, {
         method: 'DELETE',
         headers: {
@@ -246,6 +246,8 @@ const UsersPage = () => {
             setSelectedUser(null);
           }}
           onSave={handleSaveUser}
+          token={user?.token}
+          apiUrl={apiUrl}
           user={selectedUser}
         />
 
