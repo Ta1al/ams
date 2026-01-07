@@ -3,9 +3,11 @@ import { AuthProvider } from './context/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
+import CourseDetailPage from './pages/CourseDetailPage';
 // Admin pages
 import UsersPage from './pages/admin/UsersPage';
 import ProgramsPage from './pages/admin/ProgramsPage';
+import CoursesPage from './pages/admin/CoursesPage';
 // Teacher pages
 import TeacherStudentsPage from './pages/teacher/StudentsPage';
 import TeacherAttendancePage from './pages/teacher/AttendancePage';
@@ -45,6 +47,14 @@ function App() {
               </ProtectedRoute>
             }
           />
+          <Route
+            path="/admin/courses"
+            element={
+              <ProtectedRoute allowedRoles={['admin']}>
+                <CoursesPage />
+              </ProtectedRoute>
+            }
+          />
 
           {/* Teacher Routes */}
           <Route
@@ -60,6 +70,16 @@ function App() {
             element={
               <ProtectedRoute allowedRoles={['teacher', 'admin']}>
                 <TeacherAttendancePage />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Course Detail */}
+          <Route
+            path="/courses/:courseId"
+            element={
+              <ProtectedRoute allowedRoles={['admin', 'teacher', 'student']}>
+                <CourseDetailPage />
               </ProtectedRoute>
             }
           />
