@@ -15,7 +15,7 @@ const ProgramsPage = () => {
   const [isDivisionModalOpen, setIsDivisionModalOpen] = useState(false);
   const [selectedProgram, setSelectedProgram] = useState(null);
   const [deleteConfirm, setDeleteConfirm] = useState(null);
-  const [formData, setFormData] = useState({ name: '', level: 'BS', division: '' });
+  const [formData, setFormData] = useState({ program: 'BS', discipline: '' });
   const [departmentForm, setDepartmentForm] = useState({ name: '', facultyId: '' });
   const [divisionForm, setDivisionForm] = useState({ name: '', departmentId: '' });
   const [saving, setSaving] = useState(false);
@@ -86,7 +86,7 @@ const ProgramsPage = () => {
 
   const openAddModal = () => {
     setSelectedProgram(null);
-    setFormData({ name: '', level: 'BS', division: '' });
+    setFormData({ program: 'BS', discipline: '' });
     setError('');
     setIsModalOpen(true);
   };
@@ -106,9 +106,8 @@ const ProgramsPage = () => {
   const openEditModal = (program) => {
     setSelectedProgram(program);
     setFormData({
-      name: program.name,
-      level: program.level,
-      division: program.division?._id || '',
+      program: program.program,
+      discipline: program.discipline?._id || '',
     });
     setError('');
     setIsModalOpen(true);
@@ -221,8 +220,8 @@ const ProgramsPage = () => {
     setDeleteConfirm(null);
   };
 
-  const getLevelBadgeClass = (level) => {
-    switch (level) {
+  const getProgramBadgeClass = (program) => {
+    switch (program) {
       case 'BS': return 'badge-primary';
       case 'MS': return 'badge-secondary';
       case 'PhD': return 'badge-accent';
@@ -273,23 +272,19 @@ const ProgramsPage = () => {
                 <table className="table">
                   <thead>
                     <tr>
-                      <th>Name</th>
-                      <th>Level</th>
-                      <th>Division</th>
+                      <th>Discipline</th>
+                      <th>Program</th>
                       <th className="text-right">Actions</th>
                     </tr>
                   </thead>
                   <tbody>
                     {programs.map((p) => (
                       <tr key={p._id} className="hover">
-                        <td className="font-medium">{p.name}</td>
+                        <td className="font-medium">{p.discipline?.name || 'N/A'}</td>
                         <td>
-                          <span className={`badge ${getLevelBadgeClass(p.level)}`}>
-                            {p.level}
+                          <span className={`badge ${getProgramBadgeClass(p.program)}`}>
+                            {p.program}
                           </span>
-                        </td>
-                        <td className="text-base-content/70">
-                          {p.division?.name || 'N/A'}
                         </td>
                         <td className="text-right">
                           <div className="flex justify-end gap-2">
@@ -320,21 +315,11 @@ const ProgramsPage = () => {
               {error && <div className="alert alert-error mb-4"><span>{error}</span></div>}
               <form onSubmit={handleSave}>
                 <div className="form-control mb-4">
-                  <label className="label"><span className="label-text">Name</span></label>
-                  <input
-                    type="text"
-                    className="input input-bordered"
-                    value={formData.name}
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    required
-                  />
-                </div>
-                <div className="form-control mb-4">
-                  <label className="label"><span className="label-text">Level</span></label>
+                  <label className="label"><span className="label-text">Program</span></label>
                   <select
                     className="select select-bordered"
-                    value={formData.level}
-                    onChange={(e) => setFormData({ ...formData, level: e.target.value })}
+                    value={formData.program}
+                    onChange={(e) => setFormData({ ...formData, program: e.target.value })}
                   >
                     <option value="BS">Bachelor (BS)</option>
                     <option value="MS">Master (MS)</option>
@@ -342,14 +327,14 @@ const ProgramsPage = () => {
                   </select>
                 </div>
                 <div className="form-control mb-6">
-                  <label className="label"><span className="label-text">Division</span></label>
+                  <label className="label"><span className="label-text">Discipline</span></label>
                   <select
                     className="select select-bordered"
-                    value={formData.division}
-                    onChange={(e) => setFormData({ ...formData, division: e.target.value })}
+                    value={formData.discipline}
+                    onChange={(e) => setFormData({ ...formData, discipline: e.target.value })}
                     required
                   >
-                    <option value="">Select Division</option>
+                    <option value="">Select Discipline</option>
                     {divisions.map((d) => (
                       <option key={d._id} value={d._id}>
                         {d.name} ({d.department?.name})
@@ -358,7 +343,7 @@ const ProgramsPage = () => {
                   </select>
                   <label className="label">
                     <span className="label-text-alt text-base-content/60">
-                      Missing a division? Use “Add Department” / “Add Discipline” above.
+                      Missing a discipline? Use “Add Department” / “Add Discipline” above.
                     </span>
                   </label>
                 </div>
@@ -417,7 +402,7 @@ const ProgramsPage = () => {
           </dialog>
         )}
 
-        {/* Add Discipline (Division) Modal */}
+        {/* Add Discipline Modal */}
         {isDivisionModalOpen && (
           <dialog className="modal modal-open">
             <div className="modal-box">
