@@ -15,9 +15,9 @@ const courseSchema = new mongoose.Schema({
     ref: 'Department',
     required: true,
   },
-  division: {
+  discipline: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'Division',
+    ref: 'Discipline',
     required: true,
   },
   program: {
