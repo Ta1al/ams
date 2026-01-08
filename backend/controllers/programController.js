@@ -8,7 +8,7 @@ const getPrograms = async (req, res) => {
   try {
     const programs = await Program.find()
       .populate({
-        path: 'division',
+        path: 'discipline',
         select: 'name department',
         populate: {
           path: 'department',
@@ -27,12 +27,12 @@ const getPrograms = async (req, res) => {
 // @access  Private/Admin
 const createProgram = async (req, res) => {
   try {
-    const { name, level, division } = req.body;
+    const discipline = req.body.discipline || req.body.division;
+    const programValue = req.body.program || req.body.level;
 
     const program = await Program.create({
-      name,
-      level,
-      division,
+      discipline,
+      program: programValue,
     });
 
     res.status(201).json(program);
@@ -46,16 +46,16 @@ const createProgram = async (req, res) => {
 // @access  Private/Admin
 const updateProgram = async (req, res) => {
   try {
-    const { name, level, division } = req.body;
+    const discipline = req.body.discipline || req.body.division;
+    const programValue = req.body.program || req.body.level;
 
     const program = await Program.findById(req.params.id);
     if (!program) {
       return res.status(404).json({ message: 'Program not found' });
     }
 
-    program.name = name || program.name;
-    program.level = level || program.level;
-    program.division = division || program.division;
+    program.program = programValue || program.program;
+    program.discipline = discipline || program.discipline;
 
     await program.save();
     res.json(program);
