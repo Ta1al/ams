@@ -19,7 +19,7 @@ const fallbackCourse = {
   code: 'COURSE-000',
   program: { name: 'Program TBD', level: 'N/A' },
   department: { name: 'Department TBD' },
-  division: { name: 'Division TBD' },
+  discipline: { name: 'Discipline TBD' },
   teacher: { name: 'Instructor TBD' },
 };
 
@@ -189,7 +189,7 @@ const CourseDetailPage = () => {
                     <MapPin className="w-4 h-4" />
                     {displayCourse.department?.name}
                   </p>
-                  <p className="text-xs text-base-content/60">Division: {displayCourse.division?.name}</p>
+                  <p className="text-xs text-base-content/60">Discipline: {displayCourse.discipline?.name}</p>
                 </div>
                 <div className="p-4 rounded-xl bg-base-200">
                   <p className="text-sm text-base-content/60">Instructor</p>

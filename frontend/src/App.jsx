@@ -7,6 +7,7 @@ import CourseDetailPage from './pages/CourseDetailPage';
 // Admin pages
 import UsersPage from './pages/admin/UsersPage';
 import ProgramsPage from './pages/admin/ProgramsPage';
+import DisciplinesPage from './pages/admin/DisciplinesPage';
 import CoursesPage from './pages/admin/CoursesPage';
 import ClassesPage from './pages/admin/ClassesPage';
 // Teacher pages
@@ -46,6 +47,14 @@ function App() {
             element={
               <ProtectedRoute allowedRoles={['admin']}>
                 <ProgramsPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/disciplines"
+            element={
+              <ProtectedRoute allowedRoles={['admin']}>
+                <DisciplinesPage />
               </ProtectedRoute>
             }
           />

@@ -71,7 +71,7 @@ const TeacherClassesPage = () => {
                         {c.sessionLabel || `${c.session?.startYear}-${c.session?.endYear}`} · {c.section}
                       </p>
                       <p className="text-xs text-base-content/60">
-                        {c.department?.name} / {c.division?.name}
+                        {c.department?.name} / {c.discipline?.name}
                       </p>
                     </div>
                     <div className="flex gap-2">
