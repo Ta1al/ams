@@ -1,7 +1,7 @@
 # Logic Consistency Report
 
 > **Note**: This report is automatically generated.
-> Last updated: 2026-01-08T15:56:07.351Z
+> Last updated: 2026-01-08T17:06:11.125Z
 
 ## Overview
 
@@ -23,7 +23,7 @@ The following relationships are defined:
 Each controller should have corresponding routes:
 
 - **authController**: 1 functions, 1 documented routes
-- **classController**: 5 functions, 5 documented routes
+- **classController**: 6 functions, 6 documented routes
 - **courseController**: 5 functions, 5 documented routes
 - **dashboardController**: 1 functions, 1 documented routes
 - **departmentController**: 3 functions, 3 documented routes

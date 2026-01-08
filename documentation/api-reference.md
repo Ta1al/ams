@@ -1,7 +1,7 @@
 # API Reference
 
 > **Note**: This documentation is automatically generated from the backend code.
-> Last updated: 2026-01-08T15:56:07.346Z
+> Last updated: 2026-01-08T17:06:11.120Z
 
 ## Overview
 
@@ -28,12 +28,15 @@ This document provides a comprehensive reference for all API endpoints in the AM
 
 #### `DELETE /api/classes/:id`
 
+#### `GET /api/classes/:id/students`
+
 **Handler Functions:**
 - `getClasses`
 - `getClassById`
 - `createClass`
 - `updateClass`
 - `deleteClass`
+- `getClassStudents`
 
 ### courseController
 
@@ -153,6 +156,7 @@ This document provides a comprehensive reference for all API endpoints in the AM
 
 **Endpoints:**
 
+- `GET /:id/students`
 - `ROUTE /`
 - `ROUTE /:id`
 
