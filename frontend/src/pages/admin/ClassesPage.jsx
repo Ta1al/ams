@@ -120,8 +120,8 @@ const ClassesPage = () => {
     try {
       const payload = {
         program: selectedProgram._id,
-        division: selectedProgram.division?._id,
-        department: selectedProgram.division?.department?._id,
+        discipline: selectedProgram.discipline?._id,
+        department: selectedProgram.discipline?.department?._id,
         section: formData.section,
         session: { startYear, endYear },
       };
@@ -185,7 +185,7 @@ const ClassesPage = () => {
                       <th>Program</th>
                       <th>Session</th>
                       <th>Section</th>
-                      <th>Division</th>
+                      <th>Discipline</th>
                       <th>Department</th>
                       <th className="text-right">Actions</th>
                     </tr>
@@ -193,10 +193,10 @@ const ClassesPage = () => {
                   <tbody>
                     {classes.map((c) => (
                       <tr key={c._id} className="hover">
-                        <td className="font-medium">{c.program?.name} ({c.program?.level})</td>
+                        <td className="font-medium">{c.program?.discipline?.name} ({c.program?.program})</td>
                         <td className="text-base-content/70">{c.sessionLabel || `${c.session?.startYear}-${c.session?.endYear}`}</td>
                         <td className="text-base-content/70">{c.section}</td>
-                        <td className="text-base-content/70">{c.division?.name}</td>
+                        <td className="text-base-content/70">{c.discipline?.name}</td>
                         <td className="text-base-content/70">{c.department?.name}</td>
                         <td className="text-right">
                           <div className="flex justify-end gap-2">
@@ -248,7 +248,7 @@ const ClassesPage = () => {
                     <option value="">No (fill manually)</option>
                     {classes.map((c) => (
                       <option key={c._id} value={c._id}>
-                        {c.program?.name} ({c.program?.level}) – {c.sessionLabel || `${c.session?.startYear}-${c.session?.endYear}`} – {c.section}
+                        {c.program?.discipline?.name} ({c.program?.program}) – {c.sessionLabel || `${c.session?.startYear}-${c.session?.endYear}`} – {c.section}
                       </option>
                     ))}
                   </select>
@@ -275,7 +275,7 @@ const ClassesPage = () => {
                     <option value="">Select program</option>
                     {programs.map((p) => (
                       <option key={p._id} value={p._id}>
-                        {p.name} ({p.level}) – {p.division?.name} / {p.division?.department?.name}
+                        {p.discipline?.name} ({p.program}) – {p.discipline?.department?.name}
                       </option>
                     ))}
                   </select>
@@ -335,13 +335,13 @@ const ClassesPage = () => {
                 <div className="bg-base-200 rounded-lg p-3 text-sm flex flex-col gap-1">
                   <div className="flex items-center gap-2">
                     <GraduationCap className="w-4 h-4" />
-                    <span className="font-semibold">Department / Division</span>
+                    <span className="font-semibold">Department / Discipline</span>
                   </div>
                   <p>
-                    {selectedProgram?.division?.department?.name || 'Pick a program to auto-fill department'}
+                    {selectedProgram?.discipline?.department?.name || 'Pick a program to auto-fill department'}
                   </p>
                   <p className="text-base-content/60">
-                    {selectedProgram?.division?.name || 'Division will match selected program'}
+                    {selectedProgram?.discipline?.name || 'Discipline will match selected program'}
                   </p>
                 </div>
 
