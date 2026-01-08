@@ -1,7 +1,7 @@
 # Backend Structure
 
 > **Note**: This documentation is automatically generated from the backend code.
-> Last updated: 2026-01-08T17:06:11.125Z
+> Last updated: 2026-01-08T19:50:29.953Z
 
 ## Architecture Overview
 
@@ -26,7 +26,7 @@ backend/
 | Field | Type |
 |-------|------|
 | department | ObjectId |
-| division | ObjectId |
+| discipline | ObjectId |
 | program | ObjectId |
 | session | Number |
 | endYear | Number |
@@ -46,7 +46,7 @@ backend/
 | name | String |
 | code | String |
 | department | ObjectId |
-| division | ObjectId |
+| discipline | ObjectId |
 | program | ObjectId |
 | teacher | ObjectId |
 
@@ -69,6 +69,18 @@ backend/
 **References:**
 - Faculty
 - User
+
+### Discipline
+
+**Fields:**
+
+| Field | Type |
+|-------|------|
+| name | String |
+| department | ObjectId |
+
+**References:**
+- Department
 
 ### Division
 
@@ -96,12 +108,13 @@ backend/
 
 | Field | Type |
 |-------|------|
-| name | String |
 | level | String |
-| division | ObjectId |
+| discipline | ObjectId |
+| department | ObjectId |
 
 **References:**
-- Division
+- Discipline
+- Department
 
 ### User
 
@@ -139,8 +152,8 @@ Department
 
 ## Component Statistics
 
-- **Models**: 7
-- **Controllers**: 9
-- **Routes**: 9
+- **Models**: 8
+- **Controllers**: 10
+- **Routes**: 10
 - **Middleware**: 1
 
