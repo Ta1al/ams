@@ -1,7 +1,7 @@
 # Full-Stack Logic Consistency Report
 
-> **Note**: This report is automatically generated.
-> Last updated: 2026-01-08T17:24:15.565Z
+> **Note**: This report is automatically generated and includes both backend and frontend analysis.
+> Last updated: 2026-01-08T17:30:15.525Z
 
 ## Overview
 
@@ -51,10 +51,10 @@ Each controller should have corresponding routes:
 
 ### Component Statistics
 
-- **Pages**: 10
+- **Pages**: 15
 - **Components**: 3
-- **Routes**: 9
-- **API Calls**: 8
+- **Routes**: 14
+- **API Calls**: 24
 
 ### Frontend Routes
 
@@ -64,8 +64,13 @@ Each controller should have corresponding routes:
 | /dashboard | ProtectedRoute | ✅ | admin |
 | /admin/users | ProtectedRoute | ✅ | admin |
 | /admin/programs | ProtectedRoute | ✅ | admin |
+| /admin/disciplines | ProtectedRoute | ✅ | admin |
+| /admin/courses | ProtectedRoute | ✅ | admin |
+| /admin/classes | ProtectedRoute | ✅ | admin |
+| /teacher/classes | ProtectedRoute | ✅ | teacher, admin |
 | /teacher/students | ProtectedRoute | ✅ | teacher, admin |
 | /teacher/attendance | ProtectedRoute | ✅ | teacher, admin |
+| /courses/:courseId | ProtectedRoute | ✅ | admin, teacher, student |
 | /student/attendance | ProtectedRoute | ✅ | student |
 | / | Navigate | ❌ | All authenticated |
 | * | Navigate | ❌ | All authenticated |
@@ -74,18 +79,44 @@ Each controller should have corresponding routes:
 
 **components/modals/UserModal.jsx**:
 - GET /api/programs
-- GET /api/departments
+- GET /api/classes?program=
+
+**pages/CourseDetailPage.jsx**:
+- GET /api/courses/
+
+**pages/admin/ClassesPage.jsx**:
+- GET /api/classes
+- GET /api/programs
+- GET /api/disciplines?programId=
+- POST /api/classes
+
+**pages/admin/CoursesPage.jsx**:
+- GET /api/courses
+- GET /api/programs
+- GET /api/users?role=teacher
+- GET /api/disciplines?programId=
+- POST /api/courses
+
+**pages/admin/DisciplinesPage.jsx**:
+- GET /api/programs
+- GET /api/disciplines
+- POST /api/disciplines
+- DELETE /api/disciplines/
 
 **pages/admin/ProgramsPage.jsx**:
 - GET /api/programs
-- GET /api/programs/divisions
+- GET /api/programs/departments
 - DELETE /api/programs/
 
 **pages/admin/UsersPage.jsx**:
 - DELETE /api/users/
 
 **pages/teacher/AttendancePage.jsx**:
-- GET /api/users
+- GET /api/classes
+- GET /api/classes//students
+
+**pages/teacher/ClassesPage.jsx**:
+- GET /api/classes
 
 **pages/teacher/StudentsPage.jsx**:
 - GET /api/users?role=student
@@ -94,36 +125,57 @@ Each controller should have corresponding routes:
 
 ### Summary
 
-- Backend Endpoints: 5
-- Frontend API Calls: 7
+- Backend Endpoints: 6
+- Frontend API Calls: 17
 - Matched Endpoints: 0
-- Issues Found: 7
-- Warnings: 5
+- Issues Found: 17
+- Warnings: 6
 
 ### 🔴 Critical Issues
 
 1. **missing_backend_endpoint**: Frontend calls endpoint that doesn't exist in backend: GET /api/programs
-   - Files: components/modals/UserModal.jsx, pages/admin/ProgramsPage.jsx
-2. **missing_backend_endpoint**: Frontend calls endpoint that doesn't exist in backend: GET /api/departments
+   - Files: components/modals/UserModal.jsx, pages/admin/ClassesPage.jsx, pages/admin/CoursesPage.jsx, pages/admin/DisciplinesPage.jsx, pages/admin/ProgramsPage.jsx
+2. **missing_backend_endpoint**: Frontend calls endpoint that doesn't exist in backend: GET /api/classes?program=
    - Files: components/modals/UserModal.jsx
-3. **missing_backend_endpoint**: Frontend calls endpoint that doesn't exist in backend: GET /api/programs/divisions
+3. **missing_backend_endpoint**: Frontend calls endpoint that doesn't exist in backend: GET /api/courses/
+   - Files: pages/CourseDetailPage.jsx
+4. **missing_backend_endpoint**: Frontend calls endpoint that doesn't exist in backend: GET /api/classes
+   - Files: pages/admin/ClassesPage.jsx, pages/teacher/AttendancePage.jsx, pages/teacher/ClassesPage.jsx
+5. **missing_backend_endpoint**: Frontend calls endpoint that doesn't exist in backend: GET /api/disciplines?programId=
+   - Files: pages/admin/ClassesPage.jsx, pages/admin/CoursesPage.jsx
+6. **missing_backend_endpoint**: Frontend calls endpoint that doesn't exist in backend: POST /api/classes
+   - Files: pages/admin/ClassesPage.jsx
+7. **missing_backend_endpoint**: Frontend calls endpoint that doesn't exist in backend: GET /api/courses
+   - Files: pages/admin/CoursesPage.jsx
+8. **missing_backend_endpoint**: Frontend calls endpoint that doesn't exist in backend: GET /api/users?role=teacher
+   - Files: pages/admin/CoursesPage.jsx
+9. **missing_backend_endpoint**: Frontend calls endpoint that doesn't exist in backend: POST /api/courses
+   - Files: pages/admin/CoursesPage.jsx
+10. **missing_backend_endpoint**: Frontend calls endpoint that doesn't exist in backend: GET /api/disciplines
+   - Files: pages/admin/DisciplinesPage.jsx
+11. **missing_backend_endpoint**: Frontend calls endpoint that doesn't exist in backend: POST /api/disciplines
+   - Files: pages/admin/DisciplinesPage.jsx
+12. **missing_backend_endpoint**: Frontend calls endpoint that doesn't exist in backend: DELETE /api/disciplines/
+   - Files: pages/admin/DisciplinesPage.jsx
+13. **missing_backend_endpoint**: Frontend calls endpoint that doesn't exist in backend: GET /api/programs/departments
    - Files: pages/admin/ProgramsPage.jsx
-4. **missing_backend_endpoint**: Frontend calls endpoint that doesn't exist in backend: DELETE /api/programs/
+14. **missing_backend_endpoint**: Frontend calls endpoint that doesn't exist in backend: DELETE /api/programs/
    - Files: pages/admin/ProgramsPage.jsx
-5. **missing_backend_endpoint**: Frontend calls endpoint that doesn't exist in backend: DELETE /api/users/
+15. **missing_backend_endpoint**: Frontend calls endpoint that doesn't exist in backend: DELETE /api/users/
    - Files: pages/admin/UsersPage.jsx
-6. **missing_backend_endpoint**: Frontend calls endpoint that doesn't exist in backend: GET /api/users
+16. **missing_backend_endpoint**: Frontend calls endpoint that doesn't exist in backend: GET /api/classes//students
    - Files: pages/teacher/AttendancePage.jsx
-7. **missing_backend_endpoint**: Frontend calls endpoint that doesn't exist in backend: GET /api/users?role=student
+17. **missing_backend_endpoint**: Frontend calls endpoint that doesn't exist in backend: GET /api/users?role=student
    - Files: pages/teacher/StudentsPage.jsx
 
 ### ⚠️ Warnings
 
 1. **unused_backend_endpoint**: Backend endpoint not used by frontend: POST /login
-2. **unused_backend_endpoint**: Backend endpoint not used by frontend: ROUTE /
-3. **unused_backend_endpoint**: Backend endpoint not used by frontend: ROUTE /:id
-4. **unused_backend_endpoint**: Backend endpoint not used by frontend: GET /stats
-5. **unused_backend_endpoint**: Backend endpoint not used by frontend: GET /divisions
+2. **unused_backend_endpoint**: Backend endpoint not used by frontend: GET /:id/students
+3. **unused_backend_endpoint**: Backend endpoint not used by frontend: ROUTE /
+4. **unused_backend_endpoint**: Backend endpoint not used by frontend: ROUTE /:id
+5. **unused_backend_endpoint**: Backend endpoint not used by frontend: GET /stats
+6. **unused_backend_endpoint**: Backend endpoint not used by frontend: GET /departments
 
 ## Recommendations
 
