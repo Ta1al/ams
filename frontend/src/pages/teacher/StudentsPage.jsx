@@ -108,7 +108,7 @@ const StudentsPage = () => {
                         </td>
                         <td className="text-base-content/70">{s.username}</td>
                         <td className="text-base-content/70">
-                          {s.program?.name || 'Not assigned'}
+                          {s.program?.discipline?.name ? `${s.program.discipline.name} (${s.program.program || 'N/A'})` : 'Not assigned'}
                         </td>
                         <td className="text-base-content/70 text-sm">
                           {new Date(s.createdAt).toLocaleDateString()}
