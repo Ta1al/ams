@@ -60,13 +60,13 @@ const seedDatabase = async () => {
       console.log('Department created: Department of Computer Science');
     }
 
-    // Seed Divisions
+    // Seed Disciplines
     const divisionNames = ['Artificial Intelligence', 'Data Science', 'Software Engineering', 'Cyber Security'];
     for (const name of divisionNames) {
       const exists = await Division.findOne({ name, department: department._id });
       if (!exists) {
         await Division.create({ name, department: department._id });
-        console.log(`Division created: ${name}`);
+        console.log(`Discipline created: ${name}`);
       }
     }
 
