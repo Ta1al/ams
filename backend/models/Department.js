@@ -9,7 +9,7 @@ const departmentSchema = new mongoose.Schema({
   faculty: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Faculty',
-    required: true,
+    required: false,
   },
   headOfDepartment: {
     type: mongoose.Schema.Types.ObjectId,
