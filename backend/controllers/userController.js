@@ -33,8 +33,20 @@ const getUsers = async (req, res) => {
   try {
     const users = await User.find()
       .select('-password')
-      .populate('program', 'name')
-      .populate('class', 'section session program')
+      .populate({
+        path: 'program',
+        select: 'program discipline',
+        populate: { path: 'discipline', select: 'name department' },
+      })
+      .populate({
+        path: 'class',
+        select: 'section session program discipline department',
+        populate: {
+          path: 'program',
+          select: 'program discipline',
+          populate: { path: 'discipline', select: 'name department' },
+        },
+      })
       .populate('department', 'name')
       .sort({ createdAt: -1 });
     res.json(users);
@@ -50,8 +62,20 @@ const getUser = async (req, res) => {
   try {
     const user = await User.findById(req.params.id)
       .select('-password')
-      .populate('program', 'name')
-      .populate('class', 'section session program')
+      .populate({
+        path: 'program',
+        select: 'program discipline',
+        populate: { path: 'discipline', select: 'name department' },
+      })
+      .populate({
+        path: 'class',
+        select: 'section session program discipline department',
+        populate: {
+          path: 'program',
+          select: 'program discipline',
+          populate: { path: 'discipline', select: 'name department' },
+        },
+      })
       .populate('department', 'name');
     
     if (!user) {
