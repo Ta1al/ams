@@ -1,7 +1,7 @@
 # Logic Consistency Report
 
 > **Note**: This report is automatically generated.
-> Last updated: 2026-01-08T17:18:44.148Z
+> Last updated: 2026-01-08T17:24:15.565Z
 
 ## Overview
 
@@ -11,11 +11,11 @@ This document tracks consistency checks for the backend logic.
 
 The following relationships are defined:
 
-- **Class** references: Department, Program, Discipline
-- **Course** references: Department, Program, Discipline, User
+- **Class** references: Department, Discipline, Program
+- **Course** references: Department, Discipline, Program, User
 - **Department** references: User
-- **Program** references: Department
 - **Discipline** references: Program
+- **Program** references: Department
 - **User** references: Program, Class, Department
 
 ## Controller Coverage
@@ -27,8 +27,7 @@ Each controller should have corresponding routes:
 - **courseController**: 5 functions, 5 documented routes
 - **dashboardController**: 1 functions, 1 documented routes
 - **departmentController**: 3 functions, 3 documented routes
-- **divisionController**: 3 functions, 3 documented routes
-- **facultyController**: 3 functions, 3 documented routes
+- **disciplineController**: 3 functions, 3 documented routes
 - **programController**: 5 functions, 5 documented routes
 - **userController**: 6 functions, 5 documented routes
 
@@ -39,8 +38,7 @@ Each controller should have corresponding routes:
 - **courseRoutes**: 1 middleware(s) applied
 - **dashboardRoutes**: 1 middleware(s) applied
 - **departmentRoutes**: 1 middleware(s) applied
-- **divisionRoutes**: 1 middleware(s) applied
-- **facultyRoutes**: 1 middleware(s) applied
+- **disciplineRoutes**: 1 middleware(s) applied
 - **programRoutes**: 1 middleware(s) applied
 - **userRoutes**: 1 middleware(s) applied
 

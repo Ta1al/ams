@@ -1,7 +1,7 @@
 # API Reference
 
 > **Note**: This documentation is automatically generated from the backend code.
-> Last updated: 2026-01-08T17:18:44.142Z
+> Last updated: 2026-01-08T17:24:15.560Z
 
 ## Overview
 
@@ -77,31 +77,18 @@ This document provides a comprehensive reference for all API endpoints in the AM
 - `createDepartment`
 - `deleteDepartment`
 
-### divisionController
+### disciplineController
 
-#### `GET /api/divisions`
+#### `GET /api/disciplines`
 
-#### `POST /api/divisions`
+#### `POST /api/disciplines`
 
-#### `DELETE /api/divisions/:id`
-
-**Handler Functions:**
-- `getDivisions`
-- `createDivision`
-- `deleteDivision`
-
-### facultyController
-
-#### `GET /api/faculties`
-
-#### `POST /api/faculties`
-
-#### `DELETE /api/faculties/:id`
+#### `DELETE /api/disciplines/:id`
 
 **Handler Functions:**
-- `getFaculties`
-- `createFaculty`
-- `deleteFaculty`
+- `getDisciplines`
+- `createDiscipline`
+- `deleteDiscipline`
 
 ### programController
 
@@ -113,14 +100,14 @@ This document provides a comprehensive reference for all API endpoints in the AM
 
 #### `DELETE /api/programs/:id`
 
-#### `GET /api/programs/divisions`
+#### `GET /api/programs/departments`
 
 **Handler Functions:**
 - `getPrograms`
 - `createProgram`
 - `updateProgram`
 - `deleteProgram`
-- `getDivisions`
+- `getDepartments`
 
 ### userController
 
@@ -192,17 +179,7 @@ This document provides a comprehensive reference for all API endpoints in the AM
 **Middleware:**
 - middleware/authMiddleware
 
-### divisionRoutes
-
-**Endpoints:**
-
-- `ROUTE /`
-- `ROUTE /:id`
-
-**Middleware:**
-- middleware/authMiddleware
-
-### facultyRoutes
+### disciplineRoutes
 
 **Endpoints:**
 
@@ -216,7 +193,7 @@ This document provides a comprehensive reference for all API endpoints in the AM
 
 **Endpoints:**
 
-- `GET /divisions`
+- `GET /departments`
 - `ROUTE /`
 - `ROUTE /:id`
 
