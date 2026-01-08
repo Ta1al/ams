@@ -1,9 +1,9 @@
 const dotenv = require('dotenv');
 const bcrypt = require('bcryptjs');
 const User = require('./models/User');
-const Faculty = require('./models/Faculty');
 const Department = require('./models/Department');
-const Division = require('./models/Division');
+const Program = require('./models/Program');
+const Discipline = require('./models/Discipline');
 const connectDB = require('./config/db');
 
 // Load env vars
@@ -43,30 +43,51 @@ const seedDatabase = async () => {
       console.log('Admin account created!');
     }
 
-    // Seed Faculty
-    let faculty = await Faculty.findOne({ name: 'Faculty of Computing' });
-    if (!faculty) {
-      faculty = await Faculty.create({ name: 'Faculty of Computing' });
-      console.log('Faculty created: Faculty of Computing');
-    }
-
     // Seed Department
     let department = await Department.findOne({ name: 'Department of Computer Science' });
     if (!department) {
       department = await Department.create({
         name: 'Department of Computer Science',
-        faculty: faculty._id,
       });
       console.log('Department created: Department of Computer Science');
     }
 
-    // Seed Divisions
-    const divisionNames = ['Artificial Intelligence', 'Data Science', 'Software Engineering', 'Cyber Security'];
-    for (const name of divisionNames) {
-      const exists = await Division.findOne({ name, department: department._id });
-      if (!exists) {
-        await Division.create({ name, department: department._id });
-        console.log(`Division created: ${name}`);
+    // Seed Programs
+    const programSeeds = [
+      { name: 'Computer Science', level: 'BS' },
+      { name: 'Computer Science', level: 'MS' },
+      { name: 'Computer Science', level: 'PhD' },
+      { name: 'Computer Science', level: 'Diploma' },
+    ];
+
+    const programsByLevel = {};
+    for (const seed of programSeeds) {
+      let program = await Program.findOne({
+        name: seed.name,
+        level: seed.level,
+        department: department._id,
+      });
+      if (!program) {
+        program = await Program.create({
+          name: seed.name,
+          level: seed.level,
+          department: department._id,
+        });
+        console.log(`Program created: ${seed.name} (${seed.level})`);
+      }
+      programsByLevel[seed.level] = program;
+    }
+
+    // Seed Disciplines under BS program
+    const bsProgram = programsByLevel.BS;
+    if (bsProgram) {
+      const disciplineNames = ['Artificial Intelligence', 'Data Science'];
+      for (const name of disciplineNames) {
+        const exists = await Discipline.findOne({ name, program: bsProgram._id });
+        if (!exists) {
+          await Discipline.create({ name, program: bsProgram._id });
+          console.log(`Discipline created: ${name}`);
+        }
       }
     }
 
