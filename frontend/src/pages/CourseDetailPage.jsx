@@ -17,9 +17,9 @@ import { useAuth } from '../hooks/useAuth';
 const fallbackCourse = {
   name: 'Course Name TBD',
   code: 'COURSE-000',
-  program: { name: 'Program TBD', level: 'N/A' },
+  program: { program: 'N/A', discipline: { name: 'Discipline TBD' } },
   department: { name: 'Department TBD' },
-  division: { name: 'Division TBD' },
+  discipline: { name: 'Discipline TBD' },
   teacher: { name: 'Instructor TBD' },
 };
 
@@ -110,7 +110,7 @@ const CourseDetailPage = () => {
                 ) : null}
               </div>
               <p className="text-base-content/60 mt-1">
-                Managed by {displayCourse.teacher?.name || 'Instructor'} · {displayCourse.program?.name || 'Program TBD'}
+                Managed by {displayCourse.teacher?.name || 'Instructor'} · {displayCourse.program?.discipline?.name || 'Discipline TBD'} ({displayCourse.program?.program || 'N/A'})
               </p>
             </div>
           </div>
@@ -180,8 +180,8 @@ const CourseDetailPage = () => {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
                 <div className="p-4 rounded-xl bg-base-200">
                   <p className="text-sm text-base-content/60">Program</p>
-                  <p className="font-semibold">{displayCourse.program?.name}</p>
-                  <p className="text-xs text-base-content/60">Level: {displayCourse.program?.level || 'N/A'}</p>
+                  <p className="font-semibold">{displayCourse.program?.discipline?.name || '—'}</p>
+                  <p className="text-xs text-base-content/60">Program: {displayCourse.program?.program || 'N/A'}</p>
                 </div>
                 <div className="p-4 rounded-xl bg-base-200">
                   <p className="text-sm text-base-content/60">Department</p>
@@ -189,7 +189,7 @@ const CourseDetailPage = () => {
                     <MapPin className="w-4 h-4" />
                     {displayCourse.department?.name}
                   </p>
-                  <p className="text-xs text-base-content/60">Division: {displayCourse.division?.name}</p>
+                  <p className="text-xs text-base-content/60">Discipline: {displayCourse.discipline?.name || displayCourse.program?.discipline?.name || '—'}</p>
                 </div>
                 <div className="p-4 rounded-xl bg-base-200">
                   <p className="text-sm text-base-content/60">Instructor</p>
