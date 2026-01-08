@@ -32,6 +32,7 @@ const loginUser = async (req, res) => {
         role: user.role,
         program: user.program,
         class: user.class,
+        department: user.department,
         token,
       });
     } else {

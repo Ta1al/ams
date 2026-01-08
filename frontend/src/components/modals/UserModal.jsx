@@ -1,6 +1,8 @@
 import { useState, useEffect, useMemo } from 'react';
 import { X } from 'lucide-react';
 
+const SECTION_VALUES = ['Regular', 'Self Support 1', 'Self Support 2'];
+
 const UserModal = ({ isOpen, onClose, onSave, token, apiUrl, user = null }) => {
   const [formData, setFormData] = useState({
     name: '',
@@ -8,12 +10,16 @@ const UserModal = ({ isOpen, onClose, onSave, token, apiUrl, user = null }) => {
     password: '',
     role: 'student',
     program: '',
+    class: '',
+    classBaseKey: '',
+    classSection: 'Regular',
     department: '',
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [programs, setPrograms] = useState([]);
   const [departments, setDepartments] = useState([]);
+  const [classes, setClasses] = useState([]);
 
   const isEditing = !!user;
 
@@ -29,6 +35,9 @@ const UserModal = ({ isOpen, onClose, onSave, token, apiUrl, user = null }) => {
         password: '',
         role: user.role || 'student',
         program: user.program?._id || user.program || '',
+        class: user.class?._id || user.class || '',
+        classBaseKey: '',
+        classSection: 'Regular',
         department: user.department?._id || user.department || '',
       });
     } else {
@@ -38,6 +47,9 @@ const UserModal = ({ isOpen, onClose, onSave, token, apiUrl, user = null }) => {
         password: '',
         role: 'student',
         program: '',
+        class: '',
+        classBaseKey: '',
+        classSection: 'Regular',
         department: '',
       });
     }
@@ -74,8 +86,132 @@ const UserModal = ({ isOpen, onClose, onSave, token, apiUrl, user = null }) => {
     fetchOptions();
   }, [isOpen, token, baseUrl]);
 
+  useEffect(() => {
+    if (!isOpen) return;
+    if (!token) return;
+    if (formData.role !== 'student') {
+      setClasses([]);
+      return;
+    }
+
+    if (!formData.program) {
+      setClasses([]);
+      return;
+    }
+
+    const fetchClasses = async () => {
+      try {
+        const res = await fetch(`${baseUrl}/api/classes?program=${formData.program}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const data = await res.json().catch(() => []);
+        if (res.ok) setClasses(Array.isArray(data) ? data : []);
+      } catch {
+        setClasses([]);
+      }
+    };
+
+    fetchClasses();
+  }, [isOpen, token, baseUrl, formData.role, formData.program]);
+
+  const baseKeyForClass = useMemo(() => {
+    return (c) => {
+      const programId = c?.program?._id || c?.program || formData.program || '';
+      const startYear = c?.session?.startYear;
+      const endYear = c?.session?.endYear;
+      if (!programId || !startYear || !endYear) return '';
+      return `${programId}|${startYear}|${endYear}`;
+    };
+  }, [formData.program]);
+
+  const classBaseOptions = useMemo(() => {
+    const seen = new Set();
+    const bases = [];
+
+    for (const c of classes) {
+      const key = baseKeyForClass(c);
+      if (!key || seen.has(key)) continue;
+      seen.add(key);
+      bases.push({
+        key,
+        label: `${c.program?.name || 'Class'}${c.program?.level ? ` (${c.program.level})` : ''} · ${c.sessionLabel || `${c.session?.startYear}-${c.session?.endYear}`}`,
+      });
+    }
+
+    bases.sort((a, b) => a.label.localeCompare(b.label));
+    return bases;
+  }, [classes, baseKeyForClass]);
+
+  const availableSectionsForSelectedBase = useMemo(() => {
+    if (!formData.classBaseKey) return new Set();
+    return new Set(
+      classes
+        .filter((c) => baseKeyForClass(c) === formData.classBaseKey)
+        .map((c) => c.section)
+        .filter(Boolean)
+    );
+  }, [classes, baseKeyForClass, formData.classBaseKey]);
+
+  const resolveClassId = useMemo(() => {
+    return (baseKey, section) => {
+      if (!baseKey || !section) return '';
+      const match = classes.find((c) => baseKeyForClass(c) === baseKey && c.section === section);
+      return match?._id || '';
+    };
+  }, [classes, baseKeyForClass]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    if (formData.role !== 'student') return;
+    if (!formData.program) return;
+    if (!classes.length) return;
+
+    // If we already have a class id (edit mode), derive baseKey/section for UI.
+    if (formData.class && (!formData.classBaseKey || !formData.classSection)) {
+      const current = classes.find((c) => c._id === formData.class);
+      if (current) {
+        setFormData((prev) => ({
+          ...prev,
+          classBaseKey: baseKeyForClass(current),
+          classSection: current.section || prev.classSection || 'Regular',
+        }));
+      }
+      return;
+    }
+
+    // If base+section are selected but classId isn't, derive it.
+    if (!formData.class && formData.classBaseKey && formData.classSection) {
+      const nextId = resolveClassId(formData.classBaseKey, formData.classSection);
+      if (nextId) {
+        setFormData((prev) => ({ ...prev, class: nextId }));
+      }
+    }
+  }, [
+    isOpen,
+    classes,
+    formData.role,
+    formData.program,
+    formData.class,
+    formData.classBaseKey,
+    formData.classSection,
+    baseKeyForClass,
+    resolveClassId,
+  ]);
+
   const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    const next = { ...formData, [e.target.name]: e.target.value };
+    if (e.target.name === 'program') {
+      next.class = '';
+      next.classBaseKey = '';
+      next.classSection = 'Regular';
+    }
+    if (e.target.name === 'role' && e.target.value !== 'student') {
+      next.program = '';
+      next.class = '';
+      next.classBaseKey = '';
+      next.classSection = 'Regular';
+    }
+    setFormData(next);
   };
 
   const handleSubmit = async (e) => {
@@ -98,6 +234,7 @@ const UserModal = ({ isOpen, onClose, onSave, token, apiUrl, user = null }) => {
         password: formData.password,
         role: formData.role,
         program: formData.role === 'student' ? (formData.program || undefined) : undefined,
+        class: formData.role === 'student' ? (formData.class || undefined) : undefined,
         department: formData.role === 'teacher' ? (formData.department || undefined) : undefined,
       };
 
@@ -206,8 +343,9 @@ const UserModal = ({ isOpen, onClose, onSave, token, apiUrl, user = null }) => {
                 className="select select-bordered w-full"
                 value={formData.program}
                 onChange={handleChange}
+                required
               >
-                <option value="">Select program (optional)</option>
+                <option value="">Select program</option>
                 {programs.map((p) => (
                   <option key={p._id} value={p._id}>
                     {p.name} {p.level ? `(${p.level})` : ''}
@@ -216,7 +354,88 @@ const UserModal = ({ isOpen, onClose, onSave, token, apiUrl, user = null }) => {
               </select>
               <label className="label">
                 <span className="label-text-alt text-base-content/60">
-                  Students can only see courses in their program.
+                  Students must be assigned to a class.
+                </span>
+              </label>
+            </div>
+          )}
+
+          {formData.role === 'student' && (
+            <div className="form-control w-full mb-6">
+              <label className="label">
+                <span className="label-text">Class (Batch)</span>
+              </label>
+              <select
+                name="classBaseKey"
+                className="select select-bordered w-full"
+                value={formData.classBaseKey}
+                onChange={(e) => {
+                  const baseKey = e.target.value;
+                  const availableSections = classes
+                    .filter((c) => baseKeyForClass(c) === baseKey)
+                    .map((c) => c.section)
+                    .filter(Boolean);
+
+                  const preferred = availableSections.includes('Regular')
+                    ? 'Regular'
+                    : (availableSections[0] || 'Regular');
+
+                  const nextId = resolveClassId(baseKey, preferred);
+                  setFormData((prev) => ({
+                    ...prev,
+                    classBaseKey: baseKey,
+                    classSection: preferred,
+                    class: nextId || '',
+                  }));
+                }}
+                required
+                disabled={!formData.program}
+              >
+                <option value="">{formData.program ? 'Select class' : 'Select program first'}</option>
+                {classBaseOptions.map((b) => (
+                  <option key={b.key} value={b.key}>
+                    {b.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+
+          {formData.role === 'student' && (
+            <div className="form-control w-full mb-6">
+              <label className="label">
+                <span className="label-text">Section</span>
+              </label>
+              <select
+                name="classSection"
+                className="select select-bordered w-full"
+                value={formData.classSection}
+                onChange={(e) => {
+                  const nextSection = e.target.value;
+                  const nextId = resolveClassId(formData.classBaseKey, nextSection);
+                  setFormData((prev) => ({
+                    ...prev,
+                    classSection: nextSection,
+                    class: nextId || '',
+                  }));
+                }}
+                required
+                disabled={!formData.classBaseKey}
+              >
+                <option value="">{formData.classBaseKey ? 'Select section' : 'Select class first'}</option>
+                {SECTION_VALUES.map((s) => (
+                  <option
+                    key={s}
+                    value={s}
+                    disabled={formData.classBaseKey ? !availableSectionsForSelectedBase.has(s) : true}
+                  >
+                    {s}{formData.classBaseKey && !availableSectionsForSelectedBase.has(s) ? ' (not created)' : ''}
+                  </option>
+                ))}
+              </select>
+              <label className="label">
+                <span className="label-text-alt text-base-content/60">
+                  If a section is disabled, ask Admin to create that section first.
                 </span>
               </label>
             </div>

@@ -32,6 +32,7 @@ const DashboardLayout = ({ children }) => {
       return [
         ...baseItems,
         { path: '/admin/users', label: 'Users', icon: Users },
+        { path: '/admin/classes', label: 'Classes', icon: ClipboardList },
         { path: '/admin/courses', label: 'Courses', icon: BookOpen },
         { path: '/admin/programs', label: 'Programs', icon: GraduationCap },
         { path: '/admin/settings', label: 'Settings', icon: Settings },

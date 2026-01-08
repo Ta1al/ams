@@ -1,5 +1,6 @@
 const ClassModel = require('../models/Class');
 const { validateClassHierarchy } = require('../utils/validateClassHierarchy');
+const User = require('../models/User');
 
 const isValidObjectId = (value) => {
   return typeof value === 'string' && value.match(/^[0-9a-fA-F]{24}$/);
@@ -200,7 +201,42 @@ const deleteClass = async (req, res) => {
 module.exports = {
   getClasses,
   getClassById,
+  getClassStudents,
   createClass,
   updateClass,
   deleteClass,
 };
+
+// @desc    Get students for a class
+// @route   GET /api/classes/:id/students
+// @access  Private (Teacher/Admin)
+async function getClassStudents(req, res) {
+  try {
+    const { id } = req.params;
+
+    if (!isValidObjectId(id)) {
+      return res.status(400).json({ message: 'Invalid class id' });
+    }
+
+    const classDoc = await ClassModel.findById(id).select('department program');
+    if (!classDoc) {
+      return res.status(404).json({ message: 'Class not found' });
+    }
+
+    if (req.user.role === 'teacher') {
+      if (req.user.department && String(req.user.department) !== String(classDoc.department)) {
+        return res.status(403).json({ message: 'Not authorized to access this class' });
+      }
+    }
+
+    const students = await User.find({ role: 'student', class: id })
+      .select('-password')
+      .populate('program', 'name level')
+      .populate('class', 'section session program')
+      .sort({ name: 1 });
+
+    return res.status(200).json(students);
+  } catch (error) {
+    return res.status(500).json({ message: error.message });
+  }
+}

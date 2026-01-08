@@ -48,13 +48,12 @@ classSchema.virtual('sessionLabel').get(function () {
   return `${this.session.startYear}-${this.session.endYear}`;
 });
 
-classSchema.pre('validate', function (next) {
+classSchema.pre('validate', function () {
   if (this.session && this.session.startYear && this.session.endYear) {
     if (Number(this.session.endYear) <= Number(this.session.startYear)) {
       this.invalidate('session.endYear', 'endYear must be greater than startYear');
     }
   }
-  next();
 });
 
 classSchema.index(

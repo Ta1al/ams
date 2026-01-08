@@ -8,7 +8,9 @@ import CourseDetailPage from './pages/CourseDetailPage';
 import UsersPage from './pages/admin/UsersPage';
 import ProgramsPage from './pages/admin/ProgramsPage';
 import CoursesPage from './pages/admin/CoursesPage';
+import ClassesPage from './pages/admin/ClassesPage';
 // Teacher pages
+import TeacherClassesPage from './pages/teacher/ClassesPage';
 import TeacherStudentsPage from './pages/teacher/StudentsPage';
 import TeacherAttendancePage from './pages/teacher/AttendancePage';
 // Student pages
@@ -56,7 +58,24 @@ function App() {
             }
           />
 
+          <Route
+            path="/admin/classes"
+            element={
+              <ProtectedRoute allowedRoles={['admin']}>
+                <ClassesPage />
+              </ProtectedRoute>
+            }
+          />
+
           {/* Teacher Routes */}
+          <Route
+            path="/teacher/classes"
+            element={
+              <ProtectedRoute allowedRoles={['teacher', 'admin']}>
+                <TeacherClassesPage />
+              </ProtectedRoute>
+            }
+          />
           <Route
             path="/teacher/students"
             element={
