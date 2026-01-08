@@ -257,6 +257,7 @@ const ProgramsPage = () => {
                 <table className="table">
                   <thead>
                     <tr>
+                      <th>Department</th>
                       <th>Discipline</th>
                       <th>Program</th>
                       <th className="text-right">Actions</th>
@@ -265,6 +266,7 @@ const ProgramsPage = () => {
                   <tbody>
                     {programs.map((p) => (
                       <tr key={p._id} className="hover">
+                        <td className="text-base-content/70">{p.discipline?.department?.name || 'N/A'}</td>
                         <td className="font-medium">{p.discipline?.name || 'N/A'}</td>
                         <td>
                           <span className={`badge ${getProgramBadgeClass(p.program)}`}>
