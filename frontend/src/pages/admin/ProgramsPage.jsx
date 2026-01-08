@@ -8,7 +8,6 @@ const ProgramsPage = () => {
   const [programs, setPrograms] = useState([]);
   const [divisions, setDivisions] = useState([]);
   const [departments, setDepartments] = useState([]);
-  const [faculties, setFaculties] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDepartmentModalOpen, setIsDepartmentModalOpen] = useState(false);
@@ -16,7 +15,7 @@ const ProgramsPage = () => {
   const [selectedProgram, setSelectedProgram] = useState(null);
   const [deleteConfirm, setDeleteConfirm] = useState(null);
   const [formData, setFormData] = useState({ program: 'BS', discipline: '' });
-  const [departmentForm, setDepartmentForm] = useState({ name: '', facultyId: '' });
+  const [departmentForm, setDepartmentForm] = useState({ name: '' });
   const [divisionForm, setDivisionForm] = useState({ name: '', departmentId: '' });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
@@ -65,24 +64,11 @@ const ProgramsPage = () => {
     }
   }, [user?.token, apiUrl]);
 
-  const fetchFaculties = useCallback(async () => {
-    try {
-      const response = await fetch(`${apiUrl}/api/faculty`, {
-        headers: { Authorization: `Bearer ${user?.token}` },
-      });
-      const data = await response.json();
-      if (response.ok) setFaculties(Array.isArray(data) ? data : []);
-    } catch (error) {
-      console.error('Failed to fetch faculties:', error);
-    }
-  }, [user?.token, apiUrl]);
-
   useEffect(() => {
     fetchPrograms();
     fetchDivisions();
     fetchDepartments();
-    fetchFaculties();
-  }, [fetchPrograms, fetchDivisions, fetchDepartments, fetchFaculties]);
+  }, [fetchPrograms, fetchDivisions, fetchDepartments]);
 
   const openAddModal = () => {
     setSelectedProgram(null);
@@ -92,7 +78,7 @@ const ProgramsPage = () => {
   };
 
   const openAddDepartmentModal = () => {
-    setDepartmentForm({ name: '', facultyId: '' });
+    setDepartmentForm({ name: '' });
     setDepartmentError('');
     setIsDepartmentModalOpen(true);
   };
@@ -159,7 +145,6 @@ const ProgramsPage = () => {
         },
         body: JSON.stringify({
           name: departmentForm.name,
-          facultyId: departmentForm.facultyId,
         }),
       });
 
@@ -366,20 +351,6 @@ const ProgramsPage = () => {
               <h3 className="font-bold text-lg mb-4">Add Department</h3>
               {departmentError && <div className="alert alert-error mb-4"><span>{departmentError}</span></div>}
               <form onSubmit={handleSaveDepartment}>
-                <div className="form-control mb-4">
-                  <label className="label"><span className="label-text">Faculty</span></label>
-                  <select
-                    className="select select-bordered"
-                    value={departmentForm.facultyId}
-                    onChange={(e) => setDepartmentForm({ ...departmentForm, facultyId: e.target.value })}
-                    required
-                  >
-                    <option value="">Select Faculty</option>
-                    {faculties.map((f) => (
-                      <option key={f._id} value={f._id}>{f.name}</option>
-                    ))}
-                  </select>
-                </div>
                 <div className="form-control mb-6">
                   <label className="label"><span className="label-text">Department Name</span></label>
                   <input
