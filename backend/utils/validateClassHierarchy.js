@@ -6,10 +6,10 @@ const isValidObjectId = (value) => {
   return typeof value === 'string' && value.match(/^[0-9a-fA-F]{24}$/);
 };
 
-const validateClassHierarchy = async ({ department, division, program }) => {
+const validateClassHierarchy = async ({ department, discipline, program }) => {
   const errors = [];
 
-  for (const [key, value] of Object.entries({ department, division, program })) {
+  for (const [key, value] of Object.entries({ department, discipline, program })) {
     if (!value || !isValidObjectId(String(value))) {
       errors.push(`${key} is invalid`);
     }
@@ -21,20 +21,20 @@ const validateClassHierarchy = async ({ department, division, program }) => {
 
   const [departmentDoc, divisionDoc, programDoc] = await Promise.all([
     Department.findById(department),
-    Division.findById(division),
+    Division.findById(discipline),
     Program.findById(program),
   ]);
 
   if (!departmentDoc) return { ok: false, status: 400, message: 'Department not found' };
-  if (!divisionDoc) return { ok: false, status: 400, message: 'Division not found' };
+  if (!divisionDoc) return { ok: false, status: 400, message: 'Discipline not found' };
   if (!programDoc) return { ok: false, status: 400, message: 'Program not found' };
 
   if (String(divisionDoc.department) !== String(departmentDoc._id)) {
-    return { ok: false, status: 400, message: 'Division does not belong to the selected department' };
+    return { ok: false, status: 400, message: 'Discipline does not belong to the selected department' };
   }
 
-  if (String(programDoc.division) !== String(divisionDoc._id)) {
-    return { ok: false, status: 400, message: 'Program does not belong to the selected division' };
+  if (String(programDoc.discipline) !== String(divisionDoc._id)) {
+    return { ok: false, status: 400, message: 'Program does not belong to the selected discipline' };
   }
 
   return { ok: true };
