@@ -1,5 +1,5 @@
 const Program = require('../models/Program');
-const Division = require('../models/Division');
+const Discipline = require('../models/Discipline');
 
 // @desc    Get all programs
 // @route   GET /api/programs
@@ -10,11 +10,9 @@ const getPrograms = async (req, res) => {
       .populate({
         path: 'discipline',
         select: 'name department',
-        populate: {
-          path: 'department',
-          select: 'name',
-        },
+        populate: { path: 'department', select: 'name' },
       })
+      .populate({ path: 'department', select: 'name' })
       .sort({ createdAt: -1 });
     res.json(programs);
   } catch (error) {
@@ -27,12 +25,21 @@ const getPrograms = async (req, res) => {
 // @access  Private/Admin
 const createProgram = async (req, res) => {
   try {
-    const discipline = req.body.discipline || req.body.division;
-    const programValue = req.body.program || req.body.level;
+    const { level, discipline } = req.body;
+
+    if (!level || !discipline) {
+      return res.status(400).json({ message: 'Level and discipline are required' });
+    }
+
+    const disc = await Discipline.findById(discipline).populate('department');
+    if (!disc) {
+      return res.status(404).json({ message: 'Discipline not found' });
+    }
 
     const program = await Program.create({
+      level,
       discipline,
-      program: programValue,
+      department: disc.department,
     });
 
     res.status(201).json(program);
@@ -46,16 +53,23 @@ const createProgram = async (req, res) => {
 // @access  Private/Admin
 const updateProgram = async (req, res) => {
   try {
-    const discipline = req.body.discipline || req.body.division;
-    const programValue = req.body.program || req.body.level;
+    const { level, discipline } = req.body;
 
     const program = await Program.findById(req.params.id);
     if (!program) {
       return res.status(404).json({ message: 'Program not found' });
     }
 
-    program.program = programValue || program.program;
-    program.discipline = discipline || program.discipline;
+    if (level !== undefined) program.level = level;
+
+    if (discipline) {
+      const disc = await Discipline.findById(discipline);
+      if (!disc) {
+        return res.status(404).json({ message: 'Discipline not found' });
+      }
+      program.discipline = discipline;
+      program.department = disc.department;
+    }
 
     await program.save();
     res.json(program);
@@ -81,24 +95,9 @@ const deleteProgram = async (req, res) => {
   }
 };
 
-// @desc    Get all divisions (for dropdown)
-// @route   GET /api/programs/divisions
-// @access  Private/Admin
-const getDivisions = async (req, res) => {
-  try {
-    const divisions = await Division.find()
-      .populate('department', 'name')
-      .sort({ name: 1 });
-    res.json(divisions);
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-};
-
 module.exports = {
   getPrograms,
   createProgram,
   updateProgram,
   deleteProgram,
-  getDivisions,
 };
