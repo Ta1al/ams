@@ -1,17 +1,12 @@
 const mongoose = require('mongoose');
 
 const programSchema = new mongoose.Schema({
-  name: {
-    type: String,
-    required: true,
-    trim: true, // e.g., "Bachelor of Science in Artificial Intelligence"
-  },
-  level: {
+  program: {
     type: String,
     enum: ['BS', 'MS', 'PhD'], 
     required: true,
   },
-  division: {
+  discipline: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Division',
     required: true,
@@ -19,5 +14,7 @@ const programSchema = new mongoose.Schema({
 }, {
   timestamps: true,
 });
+
+programSchema.index({ discipline: 1, program: 1 }, { unique: true });
 
 module.exports = mongoose.model('Program', programSchema);
