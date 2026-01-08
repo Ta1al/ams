@@ -179,7 +179,7 @@ const AttendancePage = () => {
                   <option value="">Choose a class</option>
                   {classes.map((c) => (
                     <option key={c._id} value={c._id}>
-                      {c.program?.name} ({c.program?.level}) · {c.sessionLabel || `${c.session?.startYear}-${c.session?.endYear}`} · {c.section}
+                      {c.program?.discipline?.name} ({c.program?.program}) · {c.sessionLabel || `${c.session?.startYear}-${c.session?.endYear}`} · {c.section}
                     </option>
                   ))}
                 </select>
