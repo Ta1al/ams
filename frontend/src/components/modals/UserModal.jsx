@@ -455,7 +455,7 @@ const UserModal = ({ isOpen, onClose, onSave, token, apiUrl, user = null }) => {
                 <option value="">Select department (optional)</option>
                 {departments.map((d) => (
                   <option key={d._id} value={d._id}>
-                    {d.name}{d.faculty?.name ? ` (${d.faculty.name})` : ''}
+                    {d.name}
                   </option>
                 ))}
               </select>
