@@ -1,7 +1,7 @@
 # API Reference
 
 > **Note**: This documentation is automatically generated from the backend code.
-> Last updated: 2026-01-07T16:51:50.044Z
+> Last updated: 2026-01-08T15:56:07.346Z
 
 ## Overview
 
@@ -15,6 +15,25 @@ This document provides a comprehensive reference for all API endpoints in the AM
 
 **Handler Functions:**
 - `loginUser`
+
+### classController
+
+#### `GET /api/classes`
+
+#### `GET /api/classes/:id`
+
+#### `POST /api/classes`
+
+#### `PUT /api/classes/:id`
+
+#### `DELETE /api/classes/:id`
+
+**Handler Functions:**
+- `getClasses`
+- `getClassById`
+- `createClass`
+- `updateClass`
+- `deleteClass`
 
 ### courseController
 
@@ -113,6 +132,7 @@ This document provides a comprehensive reference for all API endpoints in the AM
 #### `DELETE /api/users/:id`
 
 **Handler Functions:**
+- `validateStudentClass`
 - `getUsers`
 - `getUser`
 - `createUser`
@@ -128,6 +148,16 @@ This document provides a comprehensive reference for all API endpoints in the AM
 **Endpoints:**
 
 - `POST /login`
+
+### classRoutes
+
+**Endpoints:**
+
+- `ROUTE /`
+- `ROUTE /:id`
+
+**Middleware:**
+- middleware/authMiddleware
 
 ### courseRoutes
 
