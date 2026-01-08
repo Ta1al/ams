@@ -21,7 +21,7 @@ const getClasses = async (req, res) => {
     const filter = {};
 
     if (req.query.department) filter.department = req.query.department;
-    if (req.query.division) filter.division = req.query.division;
+    if (req.query.discipline) filter.discipline = req.query.discipline;
     if (req.query.program) filter.program = req.query.program;
     if (req.query.section) filter.section = req.query.section;
 
@@ -40,7 +40,7 @@ const getClasses = async (req, res) => {
 
     const classes = await ClassModel.find(filter)
       .populate('department', 'name')
-      .populate('division', 'name')
+      .populate('discipline', 'name')
       .populate('program', 'name level')
       .sort({ createdAt: -1 });
 
@@ -63,7 +63,7 @@ const getClassById = async (req, res) => {
 
     const classDoc = await ClassModel.findById(id)
       .populate('department', 'name')
-      .populate('division', 'name')
+      .populate('discipline', 'name')
       .populate('program', 'name level');
 
     if (!classDoc) {
@@ -87,25 +87,25 @@ const getClassById = async (req, res) => {
 // @access  Private/Admin
 const createClass = async (req, res) => {
   try {
-    const { department, division, program, session, section } = req.body;
+    const { department, discipline, program, session, section } = req.body;
 
     const startYear = session?.startYear;
     const endYear = session?.endYear;
 
-    if (!department || !division || !program || !section || startYear === undefined || endYear === undefined) {
+    if (!department || !discipline || !program || !section || startYear === undefined || endYear === undefined) {
       return res.status(400).json({
-        message: 'department, division, program, section, session.startYear, session.endYear are required',
+        message: 'department, discipline, program, section, session.startYear, session.endYear are required',
       });
     }
 
-    const validation = await validateClassHierarchy({ department, division, program });
+    const validation = await validateClassHierarchy({ department, program, discipline });
     if (!validation.ok) {
       return res.status(validation.status).json({ message: validation.message });
     }
 
     const created = await ClassModel.create({
       department,
-      division,
+      discipline,
       program,
       section,
       session: { startYear, endYear },
@@ -136,7 +136,7 @@ const updateClass = async (req, res) => {
       return res.status(404).json({ message: 'Class not found' });
     }
 
-    const allowedFields = ['department', 'division', 'program', 'section'];
+    const allowedFields = ['department', 'discipline', 'program', 'section'];
     for (const key of Object.keys(req.body)) {
       if (allowedFields.includes(key)) {
         classDoc[key] = req.body[key];
@@ -151,14 +151,14 @@ const updateClass = async (req, res) => {
       if (endYear !== undefined) classDoc.session.endYear = endYear;
     }
 
-    const needsHierarchyValidation = ['department', 'division', 'program'].some(
+    const needsHierarchyValidation = ['department', 'discipline', 'program'].some(
       (key) => Object.prototype.hasOwnProperty.call(req.body, key)
     );
     if (needsHierarchyValidation) {
       const validation = await validateClassHierarchy({
         department: classDoc.department,
-        division: classDoc.division,
         program: classDoc.program,
+        discipline: classDoc.discipline,
       });
       if (!validation.ok) {
         return res.status(validation.status).json({ message: validation.message });

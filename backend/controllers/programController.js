@@ -1,5 +1,5 @@
 const Program = require('../models/Program');
-const Division = require('../models/Division');
+const Department = require('../models/Department');
 
 // @desc    Get all programs
 // @route   GET /api/programs
@@ -8,12 +8,8 @@ const getPrograms = async (req, res) => {
   try {
     const programs = await Program.find()
       .populate({
-        path: 'division',
-        select: 'name department',
-        populate: {
-          path: 'department',
-          select: 'name',
-        },
+        path: 'department',
+        select: 'name',
       })
       .sort({ createdAt: -1 });
     res.json(programs);
@@ -27,12 +23,21 @@ const getPrograms = async (req, res) => {
 // @access  Private/Admin
 const createProgram = async (req, res) => {
   try {
-    const { name, level, division } = req.body;
+    const { name, level, department } = req.body;
+
+    if (!department) {
+      return res.status(400).json({ message: 'Department is required' });
+    }
+
+    const departmentExists = await Department.findById(department);
+    if (!departmentExists) {
+      return res.status(404).json({ message: 'Department not found' });
+    }
 
     const program = await Program.create({
       name,
       level,
-      division,
+      department,
     });
 
     res.status(201).json(program);
@@ -46,7 +51,7 @@ const createProgram = async (req, res) => {
 // @access  Private/Admin
 const updateProgram = async (req, res) => {
   try {
-    const { name, level, division } = req.body;
+    const { name, level, department } = req.body;
 
     const program = await Program.findById(req.params.id);
     if (!program) {
@@ -55,7 +60,13 @@ const updateProgram = async (req, res) => {
 
     program.name = name || program.name;
     program.level = level || program.level;
-    program.division = division || program.division;
+    if (department) {
+      const departmentExists = await Department.findById(department);
+      if (!departmentExists) {
+        return res.status(404).json({ message: 'Department not found' });
+      }
+      program.department = department;
+    }
 
     await program.save();
     res.json(program);
@@ -81,15 +92,13 @@ const deleteProgram = async (req, res) => {
   }
 };
 
-// @desc    Get all divisions (for dropdown)
-// @route   GET /api/programs/divisions
+// @desc    Get all departments (for dropdown)
+// @route   GET /api/programs/departments
 // @access  Private/Admin
-const getDivisions = async (req, res) => {
+const getDepartments = async (req, res) => {
   try {
-    const divisions = await Division.find()
-      .populate('department', 'name')
-      .sort({ name: 1 });
-    res.json(divisions);
+    const departments = await Department.find().sort({ name: 1 });
+    res.json(departments);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -100,5 +109,5 @@ module.exports = {
   createProgram,
   updateProgram,
   deleteProgram,
-  getDivisions,
+  getDepartments,
 };

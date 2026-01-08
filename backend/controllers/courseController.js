@@ -13,7 +13,7 @@ const getCourses = async (req, res) => {
     const filter = {};
 
     if (req.query.department) filter.department = req.query.department;
-    if (req.query.division) filter.division = req.query.division;
+    if (req.query.discipline) filter.discipline = req.query.discipline;
     if (req.query.program) filter.program = req.query.program;
     if (req.query.teacher) filter.teacher = req.query.teacher;
 
@@ -32,7 +32,7 @@ const getCourses = async (req, res) => {
 
     const courses = await Course.find(filter)
       .populate('department', 'name')
-      .populate('division', 'name')
+      .populate('discipline', 'name')
       .populate('program', 'name level')
       .populate('teacher', 'name username role')
       .sort({ createdAt: -1 });
@@ -56,7 +56,7 @@ const getCourseById = async (req, res) => {
 
     const course = await Course.findById(id)
       .populate('department', 'name')
-      .populate('division', 'name')
+      .populate('discipline', 'name')
       .populate('program', 'name level')
       .populate('teacher', 'name username role');
 
@@ -85,15 +85,15 @@ const getCourseById = async (req, res) => {
 // @access  Private/Admin
 const createCourse = async (req, res) => {
   try {
-    const { name, code, department, division, program, teacher } = req.body;
+    const { name, code, department, discipline, program, teacher } = req.body;
 
-    if (!name || !department || !division || !program || !teacher) {
+    if (!name || !department || !discipline || !program || !teacher) {
       return res.status(400).json({
-        message: 'name, department, division, program, teacher are required',
+        message: 'name, department, discipline, program, teacher are required',
       });
     }
 
-    const validation = await validateCourseHierarchy({ department, division, program, teacher });
+    const validation = await validateCourseHierarchy({ department, program, discipline, teacher });
     if (!validation.ok) {
       return res.status(validation.status).json({ message: validation.message });
     }
@@ -102,7 +102,7 @@ const createCourse = async (req, res) => {
       name,
       code,
       department,
-      division,
+      discipline,
       program,
       teacher,
     });
@@ -134,21 +134,21 @@ const updateCourse = async (req, res) => {
       return res.status(404).json({ message: 'Course not found' });
     }
 
-    const allowedFields = ['name', 'code', 'department', 'division', 'program', 'teacher'];
+    const allowedFields = ['name', 'code', 'department', 'discipline', 'program', 'teacher'];
     for (const key of Object.keys(req.body)) {
       if (allowedFields.includes(key)) {
         course[key] = req.body[key];
       }
     }
 
-    const needsValidation = ['department', 'division', 'program', 'teacher'].some(
+    const needsValidation = ['department', 'discipline', 'program', 'teacher'].some(
       (key) => Object.prototype.hasOwnProperty.call(req.body, key)
     );
     if (needsValidation) {
       const validation = await validateCourseHierarchy({
         department: course.department,
-        division: course.division,
         program: course.program,
+        discipline: course.discipline,
         teacher: course.teacher,
       });
       if (!validation.ok) {
