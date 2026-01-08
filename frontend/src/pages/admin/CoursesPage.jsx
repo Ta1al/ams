@@ -95,8 +95,8 @@ const CoursesPage = () => {
         name: formData.name,
         code: formData.code || undefined,
         program: selectedProgram._id,
-        division: selectedProgram.division?._id,
-        department: selectedProgram.division?.department?._id,
+        discipline: selectedProgram.discipline?._id,
+        department: selectedProgram.discipline?.department?._id,
         teacher: formData.teacher,
       };
 
@@ -159,7 +159,7 @@ const CoursesPage = () => {
                       <th>Name</th>
                       <th>Code</th>
                       <th>Program</th>
-                      <th>Division</th>
+                      <th>Discipline</th>
                       <th>Department</th>
                       <th>Teacher</th>
                       <th className="text-right">Actions</th>
@@ -170,8 +170,10 @@ const CoursesPage = () => {
                       <tr key={c._id} className="hover">
                         <td className="font-medium">{c.name}</td>
                         <td className="text-base-content/70">{c.code || '—'}</td>
-                        <td className="text-base-content/70">{c.program?.name}</td>
-                        <td className="text-base-content/70">{c.division?.name}</td>
+                        <td className="text-base-content/70">
+                          {c.program?.discipline?.name} ({c.program?.program})
+                        </td>
+                        <td className="text-base-content/70">{c.discipline?.name}</td>
                         <td className="text-base-content/70">{c.department?.name}</td>
                         <td className="text-base-content/70">{c.teacher?.name}</td>
                         <td className="text-right">
@@ -234,7 +236,7 @@ const CoursesPage = () => {
                     <option value="">Select program</option>
                     {programs.map((p) => (
                       <option key={p._id} value={p._id}>
-                        {p.name} ({p.level}) – {p.division?.name} / {p.division?.department?.name}
+                        {p.discipline?.name} ({p.program}) – {p.discipline?.department?.name}
                       </option>
                     ))}
                   </select>
@@ -257,13 +259,13 @@ const CoursesPage = () => {
                 <div className="bg-base-200 rounded-lg p-3 text-sm flex flex-col gap-1">
                   <div className="flex items-center gap-2">
                     <GraduationCap className="w-4 h-4" />
-                    <span className="font-semibold">Department / Division</span>
+                    <span className="font-semibold">Department / Discipline</span>
                   </div>
                   <p>
-                    {selectedProgram?.division?.department?.name || 'Pick a program to auto-fill department'}
+                    {selectedProgram?.discipline?.department?.name || 'Pick a program to auto-fill department'}
                   </p>
                   <p className="text-base-content/60">
-                    {selectedProgram?.division?.name || 'Division will match selected program'}
+                    {selectedProgram?.discipline?.name || 'Discipline will match selected program'}
                   </p>
                 </div>
 
