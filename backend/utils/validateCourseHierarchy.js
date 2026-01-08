@@ -9,13 +9,13 @@ const isValidObjectId = (value) => {
 
 const validateCourseHierarchy = async ({
   department,
-  division,
+  discipline,
   program,
   teacher,
 }) => {
   const errors = [];
 
-  for (const [key, value] of Object.entries({ department, division, program, teacher })) {
+  for (const [key, value] of Object.entries({ department, discipline, program, teacher })) {
     if (!value || !isValidObjectId(String(value))) {
       errors.push(`${key} is invalid`);
     }
@@ -27,13 +27,13 @@ const validateCourseHierarchy = async ({
 
   const [departmentDoc, divisionDoc, programDoc, teacherDoc] = await Promise.all([
     Department.findById(department),
-    Division.findById(division),
+    Division.findById(discipline),
     Program.findById(program),
     User.findById(teacher).select('role department'),
   ]);
 
   if (!departmentDoc) return { ok: false, status: 400, message: 'Department not found' };
-  if (!divisionDoc) return { ok: false, status: 400, message: 'Division not found' };
+  if (!divisionDoc) return { ok: false, status: 400, message: 'Discipline not found' };
   if (!programDoc) return { ok: false, status: 400, message: 'Program not found' };
   if (!teacherDoc) return { ok: false, status: 400, message: 'Teacher user not found' };
 
@@ -41,14 +41,14 @@ const validateCourseHierarchy = async ({
     return { ok: false, status: 400, message: 'Assigned teacher must have role teacher' };
   }
 
-  // Division belongs to Department
+  // Discipline belongs to Department
   if (String(divisionDoc.department) !== String(departmentDoc._id)) {
-    return { ok: false, status: 400, message: 'Division does not belong to the selected department' };
+    return { ok: false, status: 400, message: 'Discipline does not belong to the selected department' };
   }
 
-  // Program belongs to Division
-  if (String(programDoc.division) !== String(divisionDoc._id)) {
-    return { ok: false, status: 400, message: 'Program does not belong to the selected division' };
+  // Program belongs to Discipline
+  if (String(programDoc.discipline) !== String(divisionDoc._id)) {
+    return { ok: false, status: 400, message: 'Program does not belong to the selected discipline' };
   }
 
   // Optional rule: teacher department matches chosen department (only if teacher has department set)
