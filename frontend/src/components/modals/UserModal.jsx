@@ -122,7 +122,7 @@ const UserModal = ({ isOpen, onClose, onSave, token, apiUrl, user = null }) => {
       seen.add(key);
       bases.push({
         key,
-        label: `${c.program?.name || 'Class'}${c.program?.level ? ` (${c.program.level})` : ''} · ${c.sessionLabel || `${c.session?.startYear}-${c.session?.endYear}`}`,
+        label: `${c.program?.discipline?.name || 'Class'}${c.program?.program ? ` (${c.program.program})` : ''} · ${c.sessionLabel || `${c.session?.startYear}-${c.session?.endYear}`}`,
       });
     }
 
@@ -353,7 +353,7 @@ const UserModal = ({ isOpen, onClose, onSave, token, apiUrl, user = null }) => {
                 <option value="">Select program</option>
                 {programs.map((p) => (
                   <option key={p._id} value={p._id}>
-                    {p.name} {p.level ? `(${p.level})` : ''}
+                    {p.discipline?.name || 'Discipline'} {p.program ? `(${p.program})` : ''}
                   </option>
                 ))}
               </select>
