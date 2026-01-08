@@ -12,6 +12,7 @@ const ClassesPage = () => {
 
   const [classes, setClasses] = useState([]);
   const [programs, setPrograms] = useState([]);
+  const [disciplines, setDisciplines] = useState([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -19,6 +20,7 @@ const ClassesPage = () => {
 
   const [formData, setFormData] = useState({
     program: '',
+    discipline: '',
     section: 'Regular',
     startYear: '',
     endYear: '',
@@ -92,8 +94,32 @@ const ClassesPage = () => {
     fetchPrograms();
   }, [fetchClasses, fetchPrograms]);
 
+  const fetchDisciplines = useCallback(async (programId) => {
+    if (!programId) {
+      setDisciplines([]);
+      return;
+    }
+
+    try {
+      const response = await fetch(`${apiUrl}/api/disciplines?programId=${programId}`, {
+        headers: { Authorization: `Bearer ${user?.token}` },
+      });
+      const data = await response.json();
+      if (response.ok) setDisciplines(Array.isArray(data) ? data : []);
+    } catch (err) {
+      console.error('Failed to fetch disciplines:', err);
+      setDisciplines([]);
+    }
+  }, [apiUrl, user?.token]);
+
+  useEffect(() => {
+    fetchDisciplines(formData.program);
+    setFormData((prev) => ({ ...prev, discipline: '' }));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [formData.program]);
+
   const openAddModal = () => {
-    setFormData({ program: '', section: 'Regular', startYear: '', endYear: '' });
+    setFormData({ program: '', discipline: '', section: 'Regular', startYear: '', endYear: '' });
     setCopyFromClassId('');
     setError('');
     setIsModalOpen(true);
@@ -105,6 +131,11 @@ const ClassesPage = () => {
 
     if (!selectedProgram) {
       setError('Select a program');
+      return;
+    }
+
+    if (!formData.discipline) {
+      setError('Select a discipline');
       return;
     }
 
@@ -120,8 +151,8 @@ const ClassesPage = () => {
     try {
       const payload = {
         program: selectedProgram._id,
-        division: selectedProgram.division?._id,
-        department: selectedProgram.division?.department?._id,
+        discipline: formData.discipline,
+        department: selectedProgram.department?._id,
         section: formData.section,
         session: { startYear, endYear },
       };
@@ -185,7 +216,7 @@ const ClassesPage = () => {
                       <th>Program</th>
                       <th>Session</th>
                       <th>Section</th>
-                      <th>Division</th>
+                      <th>Discipline</th>
                       <th>Department</th>
                       <th className="text-right">Actions</th>
                     </tr>
@@ -196,7 +227,7 @@ const ClassesPage = () => {
                         <td className="font-medium">{c.program?.name} ({c.program?.level})</td>
                         <td className="text-base-content/70">{c.sessionLabel || `${c.session?.startYear}-${c.session?.endYear}`}</td>
                         <td className="text-base-content/70">{c.section}</td>
-                        <td className="text-base-content/70">{c.division?.name}</td>
+                        <td className="text-base-content/70">{c.discipline?.name}</td>
                         <td className="text-base-content/70">{c.department?.name}</td>
                         <td className="text-right">
                           <div className="flex justify-end gap-2">
@@ -268,15 +299,31 @@ const ClassesPage = () => {
                     value={formData.program}
                     onChange={(e) => {
                       setCopyFromClassId('');
-                      setFormData({ ...formData, program: e.target.value });
+                      setFormData({ ...formData, program: e.target.value, discipline: '' });
                     }}
                     required
                   >
                     <option value="">Select program</option>
                     {programs.map((p) => (
                       <option key={p._id} value={p._id}>
-                        {p.name} ({p.level}) – {p.division?.name} / {p.division?.department?.name}
+                        {p.name} ({p.level}) – {p.department?.name}
                       </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="form-control">
+                  <label className="label"><span className="label-text">Discipline</span></label>
+                  <select
+                    className="select select-bordered"
+                    value={formData.discipline}
+                    onChange={(e) => setFormData({ ...formData, discipline: e.target.value })}
+                    required
+                    disabled={!formData.program}
+                  >
+                    <option value="">{formData.program ? 'Select discipline' : 'Select program first'}</option>
+                    {disciplines.map((d) => (
+                      <option key={d._id} value={d._id}>{d.name}</option>
                     ))}
                   </select>
                 </div>
@@ -335,13 +382,10 @@ const ClassesPage = () => {
                 <div className="bg-base-200 rounded-lg p-3 text-sm flex flex-col gap-1">
                   <div className="flex items-center gap-2">
                     <GraduationCap className="w-4 h-4" />
-                    <span className="font-semibold">Department / Division</span>
+                    <span className="font-semibold">Department</span>
                   </div>
                   <p>
-                    {selectedProgram?.division?.department?.name || 'Pick a program to auto-fill department'}
-                  </p>
-                  <p className="text-base-content/60">
-                    {selectedProgram?.division?.name || 'Division will match selected program'}
+                    {selectedProgram?.department?.name || 'Pick a program to auto-fill department'}
                   </p>
                 </div>
 
