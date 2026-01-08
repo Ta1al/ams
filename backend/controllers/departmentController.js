@@ -25,19 +25,21 @@ const createDepartment = async (req, res) => {
   try {
     const { name, facultyId, headOfDepartment } = req.body;
 
-    if (!name || !facultyId) {
-      return res.status(400).json({ message: 'Name and Faculty ID are required' });
+    if (!name) {
+      return res.status(400).json({ message: 'Name is required' });
     }
 
-    // Verify Faculty exists
-    const facultyExists = await Faculty.findById(facultyId);
-    if (!facultyExists) {
-      return res.status(404).json({ message: 'Faculty not found' });
+    if (facultyId) {
+      // Verify Faculty exists
+      const facultyExists = await Faculty.findById(facultyId);
+      if (!facultyExists) {
+        return res.status(404).json({ message: 'Faculty not found' });
+      }
     }
 
     const department = await Department.create({
       name,
-      faculty: facultyId,
+      faculty: facultyId || undefined,
       headOfDepartment: headOfDepartment || null,
     });
 
