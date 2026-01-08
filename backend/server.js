@@ -29,6 +29,7 @@ app.use('/api/departments', require('./routes/departmentRoutes'));
 app.use('/api/divisions', require('./routes/divisionRoutes'));
 app.use('/api/programs', require('./routes/programRoutes'));
 app.use('/api/courses', require('./routes/courseRoutes'));
+app.use('/api/classes', require('./routes/classRoutes'));
 app.use('/api/dashboard', require('./routes/dashboardRoutes'));
 app.use('/api/users', require('./routes/userRoutes'));
 
