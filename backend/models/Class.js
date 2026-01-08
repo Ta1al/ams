@@ -8,7 +8,7 @@ const classSchema = new mongoose.Schema({
     ref: 'Department',
     required: true,
   },
-  division: {
+  discipline: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Division',
     required: true,
