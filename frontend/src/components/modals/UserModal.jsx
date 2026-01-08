@@ -13,15 +13,14 @@ const UserModal = ({ isOpen, onClose, onSave, token, apiUrl, user = null }) => {
     class: '',
     classBaseKey: '',
     classSection: 'Regular',
-    department: '',
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [programs, setPrograms] = useState([]);
-  const [departments, setDepartments] = useState([]);
   const [classes, setClasses] = useState([]);
 
   const isEditing = !!user;
+  const isEditingAdminUser = isEditing && user?.role === 'admin';
 
   const baseUrl = useMemo(() => (
     apiUrl || import.meta.env.VITE_API_URL || 'http://localhost:5001'
@@ -38,7 +37,6 @@ const UserModal = ({ isOpen, onClose, onSave, token, apiUrl, user = null }) => {
         class: user.class?._id || user.class || '',
         classBaseKey: '',
         classSection: 'Regular',
-        department: user.department?._id || user.department || '',
       });
     } else {
       setFormData({
@@ -50,7 +48,6 @@ const UserModal = ({ isOpen, onClose, onSave, token, apiUrl, user = null }) => {
         class: '',
         classBaseKey: '',
         classSection: 'Regular',
-        department: '',
       });
     }
     setError('');
@@ -62,22 +59,13 @@ const UserModal = ({ isOpen, onClose, onSave, token, apiUrl, user = null }) => {
 
     const fetchOptions = async () => {
       try {
-        const [programRes, deptRes] = await Promise.all([
-          fetch(`${baseUrl}/api/programs`, {
-            headers: { Authorization: `Bearer ${token}` },
-          }),
-          fetch(`${baseUrl}/api/departments`, {
-            headers: { Authorization: `Bearer ${token}` },
-          }),
-        ]);
+        const programRes = await fetch(`${baseUrl}/api/programs`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
 
-        const [programData, deptData] = await Promise.all([
-          programRes.json().catch(() => []),
-          deptRes.json().catch(() => []),
-        ]);
+        const programData = await programRes.json().catch(() => []);
 
         if (programRes.ok) setPrograms(programData);
-        if (deptRes.ok) setDepartments(deptData);
       } catch {
         // Keep modal usable (name/username/password) even if options fail
       }
@@ -199,18 +187,25 @@ const UserModal = ({ isOpen, onClose, onSave, token, apiUrl, user = null }) => {
   ]);
 
   const handleChange = (e) => {
-    const next = { ...formData, [e.target.name]: e.target.value };
-    if (e.target.name === 'program') {
+    const { name, value } = e.target;
+    const next = { ...formData, [name]: value };
+
+    if (name === 'program') {
       next.class = '';
       next.classBaseKey = '';
       next.classSection = 'Regular';
     }
-    if (e.target.name === 'role' && e.target.value !== 'student') {
-      next.program = '';
-      next.class = '';
-      next.classBaseKey = '';
-      next.classSection = 'Regular';
+
+    if (name === 'role') {
+      // When switching roles, clear fields that don't apply.
+      if (value === 'teacher') {
+        next.program = '';
+        next.class = '';
+        next.classBaseKey = '';
+        next.classSection = 'Regular';
+      }
     }
+
     setFormData(next);
   };
 
@@ -235,7 +230,7 @@ const UserModal = ({ isOpen, onClose, onSave, token, apiUrl, user = null }) => {
         role: formData.role,
         program: formData.role === 'student' ? (formData.program || undefined) : undefined,
         class: formData.role === 'student' ? (formData.class || undefined) : undefined,
-        department: formData.role === 'teacher' ? (formData.department || undefined) : undefined,
+        department: undefined,
       };
 
       await onSave(payload);
@@ -321,16 +316,26 @@ const UserModal = ({ isOpen, onClose, onSave, token, apiUrl, user = null }) => {
             <label className="label">
               <span className="label-text">Role</span>
             </label>
-            <select
-              name="role"
-              className="select select-bordered w-full"
-              value={formData.role}
-              onChange={handleChange}
-            >
-              <option value="student">Student</option>
-              <option value="teacher">Teacher</option>
-              <option value="admin">Admin</option>
-            </select>
+            {isEditingAdminUser ? (
+              <select
+                name="role"
+                className="select select-bordered w-full"
+                value="admin"
+                disabled
+              >
+                <option value="admin">Admin</option>
+              </select>
+            ) : (
+              <select
+                name="role"
+                className="select select-bordered w-full"
+                value={formData.role}
+                onChange={handleChange}
+              >
+                <option value="student">Student</option>
+                <option value="teacher">Teacher</option>
+              </select>
+            )}
           </div>
 
           {formData.role === 'student' && (
@@ -360,7 +365,7 @@ const UserModal = ({ isOpen, onClose, onSave, token, apiUrl, user = null }) => {
             </div>
           )}
 
-          {formData.role === 'student' && (
+          {formData.role === 'student' && !!formData.program && (
             <div className="form-control w-full mb-6">
               <label className="label">
                 <span className="label-text">Class (Batch)</span>
@@ -389,9 +394,8 @@ const UserModal = ({ isOpen, onClose, onSave, token, apiUrl, user = null }) => {
                   }));
                 }}
                 required
-                disabled={!formData.program}
               >
-                <option value="">{formData.program ? 'Select class' : 'Select program first'}</option>
+                <option value="">Select class</option>
                 {classBaseOptions.map((b) => (
                   <option key={b.key} value={b.key}>
                     {b.label}
@@ -401,7 +405,7 @@ const UserModal = ({ isOpen, onClose, onSave, token, apiUrl, user = null }) => {
             </div>
           )}
 
-          {formData.role === 'student' && (
+          {formData.role === 'student' && !!formData.classBaseKey && (
             <div className="form-control w-full mb-6">
               <label className="label">
                 <span className="label-text">Section</span>
@@ -420,14 +424,13 @@ const UserModal = ({ isOpen, onClose, onSave, token, apiUrl, user = null }) => {
                   }));
                 }}
                 required
-                disabled={!formData.classBaseKey}
               >
-                <option value="">{formData.classBaseKey ? 'Select section' : 'Select class first'}</option>
+                <option value="">Select section</option>
                 {SECTION_VALUES.map((s) => (
                   <option
                     key={s}
                     value={s}
-                    disabled={formData.classBaseKey ? !availableSectionsForSelectedBase.has(s) : true}
+                    disabled={!availableSectionsForSelectedBase.has(s)}
                   >
                     {s}{formData.classBaseKey && !availableSectionsForSelectedBase.has(s) ? ' (not created)' : ''}
                   </option>
@@ -435,33 +438,7 @@ const UserModal = ({ isOpen, onClose, onSave, token, apiUrl, user = null }) => {
               </select>
               <label className="label">
                 <span className="label-text-alt text-base-content/60">
-                  If a section is disabled, ask Admin to create that section first.
-                </span>
-              </label>
-            </div>
-          )}
-
-          {formData.role === 'teacher' && (
-            <div className="form-control w-full mb-6">
-              <label className="label">
-                <span className="label-text">Department</span>
-              </label>
-              <select
-                name="department"
-                className="select select-bordered w-full"
-                value={formData.department}
-                onChange={handleChange}
-              >
-                <option value="">Select department (optional)</option>
-                {departments.map((d) => (
-                  <option key={d._id} value={d._id}>
-                    {d.name}{d.faculty?.name ? ` (${d.faculty.name})` : ''}
-                  </option>
-                ))}
-              </select>
-              <label className="label">
-                <span className="label-text-alt text-base-content/60">
-                  Used for course assignment validation.
+                  If a section is disabled, create that section first.
                 </span>
               </label>
             </div>
