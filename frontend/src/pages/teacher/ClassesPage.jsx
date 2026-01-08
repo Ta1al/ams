@@ -65,13 +65,13 @@ const TeacherClassesPage = () => {
                   <div key={c._id} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-4 rounded-xl bg-base-200">
                     <div>
                       <p className="font-semibold">
-                        {c.program?.name} ({c.program?.level})
+                        {c.program?.discipline?.name} ({c.program?.program})
                       </p>
                       <p className="text-sm text-base-content/60">
                         {c.sessionLabel || `${c.session?.startYear}-${c.session?.endYear}`} · {c.section}
                       </p>
                       <p className="text-xs text-base-content/60">
-                        {c.department?.name} / {c.division?.name}
+                        {c.department?.name} / {c.discipline?.name}
                       </p>
                     </div>
                     <div className="flex gap-2">
