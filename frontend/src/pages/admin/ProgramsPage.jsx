@@ -6,23 +6,23 @@ import DashboardLayout from '../../components/DashboardLayout';
 const ProgramsPage = () => {
   const { user } = useAuth();
   const [programs, setPrograms] = useState([]);
-  const [divisions, setDivisions] = useState([]);
+  const [disciplines, setDisciplines] = useState([]);
   const [departments, setDepartments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDepartmentModalOpen, setIsDepartmentModalOpen] = useState(false);
-  const [isDivisionModalOpen, setIsDivisionModalOpen] = useState(false);
+  const [isDisciplineModalOpen, setIsDisciplineModalOpen] = useState(false);
   const [selectedProgram, setSelectedProgram] = useState(null);
   const [deleteConfirm, setDeleteConfirm] = useState(null);
-  const [formData, setFormData] = useState({ program: 'BS', discipline: '' });
+  const [formData, setFormData] = useState({ name: '', level: 'BS', discipline: '' });
   const [departmentForm, setDepartmentForm] = useState({ name: '' });
-  const [divisionForm, setDivisionForm] = useState({ name: '', departmentId: '' });
+  const [disciplineForm, setDisciplineForm] = useState({ name: '', departmentId: '' });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [departmentSaving, setDepartmentSaving] = useState(false);
-  const [divisionSaving, setDivisionSaving] = useState(false);
+  const [disciplineSaving, setDisciplineSaving] = useState(false);
   const [departmentError, setDepartmentError] = useState('');
-  const [divisionError, setDivisionError] = useState('');
+  const [disciplineError, setDisciplineError] = useState('');
 
   const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5001';
 
@@ -40,15 +40,15 @@ const ProgramsPage = () => {
     }
   }, [user?.token, apiUrl]);
 
-  const fetchDivisions = useCallback(async () => {
+  const fetchDisciplines = useCallback(async () => {
     try {
-      const response = await fetch(`${apiUrl}/api/programs/divisions`, {
+      const response = await fetch(`${apiUrl}/api/disciplines`, {
         headers: { Authorization: `Bearer ${user?.token}` },
       });
       const data = await response.json();
-      if (response.ok) setDivisions(data);
+      if (response.ok) setDisciplines(data);
     } catch (error) {
-      console.error('Failed to fetch divisions:', error);
+      console.error('Failed to fetch disciplines:', error);
     }
   }, [user?.token, apiUrl]);
 
@@ -66,13 +66,13 @@ const ProgramsPage = () => {
 
   useEffect(() => {
     fetchPrograms();
-    fetchDivisions();
+    fetchDisciplines();
     fetchDepartments();
-  }, [fetchPrograms, fetchDivisions, fetchDepartments]);
+  }, [fetchPrograms, fetchDisciplines, fetchDepartments]);
 
   const openAddModal = () => {
     setSelectedProgram(null);
-    setFormData({ program: 'BS', discipline: '' });
+    setFormData({ level: 'BS', discipline: '' });
     setError('');
     setIsModalOpen(true);
   };
@@ -83,16 +83,16 @@ const ProgramsPage = () => {
     setIsDepartmentModalOpen(true);
   };
 
-  const openAddDivisionModal = () => {
-    setDivisionForm({ name: '', departmentId: '' });
-    setDivisionError('');
-    setIsDivisionModalOpen(true);
+  const openAddDisciplineModal = () => {
+    setDisciplineForm({ name: '', departmentId: '' });
+    setDisciplineError('');
+    setIsDisciplineModalOpen(true);
   };
 
   const openEditModal = (program) => {
     setSelectedProgram(program);
     setFormData({
-      program: program.program,
+      level: program.level || 'BS',
       discipline: program.discipline?._id || '',
     });
     setError('');
@@ -160,33 +160,33 @@ const ProgramsPage = () => {
     }
   };
 
-  const handleSaveDivision = async (e) => {
+  const handleSaveDiscipline = async (e) => {
     e.preventDefault();
-    setDivisionError('');
-    setDivisionSaving(true);
+    setDisciplineError('');
+    setDisciplineSaving(true);
 
     try {
-      const response = await fetch(`${apiUrl}/api/divisions`, {
+      const response = await fetch(`${apiUrl}/api/disciplines`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${user?.token}`,
         },
         body: JSON.stringify({
-          name: divisionForm.name,
-          departmentId: divisionForm.departmentId,
+          name: disciplineForm.name,
+          departmentId: disciplineForm.departmentId,
         }),
       });
 
       const data = await response.json();
       if (!response.ok) throw new Error(data.message || 'Failed to create discipline');
 
-      setIsDivisionModalOpen(false);
-      fetchDivisions();
+      setIsDisciplineModalOpen(false);
+      fetchDisciplines();
     } catch (err) {
-      setDivisionError(err.message);
+      setDisciplineError(err.message);
     } finally {
-      setDivisionSaving(false);
+      setDisciplineSaving(false);
     }
   };
 
@@ -236,7 +236,7 @@ const ProgramsPage = () => {
             <button onClick={openAddDepartmentModal} className="btn btn-outline">
               <Plus className="w-4 h-4" /> Add Department
             </button>
-            <button onClick={openAddDivisionModal} className="btn btn-outline">
+            <button onClick={openAddDisciplineModal} className="btn btn-outline">
               <Plus className="w-4 h-4" /> Add Discipline
             </button>
             <button onClick={openAddModal} className="btn btn-primary">
@@ -267,8 +267,8 @@ const ProgramsPage = () => {
                     {programs.map((p) => (
                       <tr key={p._id} className="hover">
                         <td>
-                          <span className={`badge ${getProgramBadgeClass(p.program)}`}>
-                            {p.program}
+                          <span className={`badge ${getProgramBadgeClass(p.level)}`}>
+                            {p.level}
                           </span>
                         </td>
                         <td className="font-medium">{p.discipline?.name || 'N/A'}</td>
@@ -305,12 +305,17 @@ const ProgramsPage = () => {
                   <label className="label"><span className="label-text">Program</span></label>
                   <select
                     className="select select-bordered"
-                    value={formData.program}
-                    onChange={(e) => setFormData({ ...formData, program: e.target.value })}
+                    value={formData.level}
+                    onChange={(e) => setFormData({ ...formData, level: e.target.value })}
+                    required
                   >
+                    <option value="">Select Program</option>
                     <option value="BS">Bachelor (BS)</option>
                     <option value="MS">Master (MS)</option>
+                    <option value="MPhil">MPhil (MPhil)</option>
+                    <option value="MBA">MBA (MBA)</option>
                     <option value="PhD">Doctorate (PhD)</option>
+                    <option value="Diploma">Diploma (Diploma)</option>
                   </select>
                 </div>
                 <div className="form-control mb-6">
@@ -322,7 +327,7 @@ const ProgramsPage = () => {
                     required
                   >
                     <option value="">Select Discipline</option>
-                    {divisions.map((d) => (
+                    {disciplines.map((d) => (
                       <option key={d._id} value={d._id}>
                         {d.name} ({d.department?.name})
                       </option>
@@ -376,24 +381,24 @@ const ProgramsPage = () => {
         )}
 
         {/* Add Discipline Modal */}
-        {isDivisionModalOpen && (
+        {isDisciplineModalOpen && (
           <dialog className="modal modal-open">
             <div className="modal-box">
               <h3 className="font-bold text-lg mb-4">Add Discipline</h3>
-              {divisionError && <div className="alert alert-error mb-4"><span>{divisionError}</span></div>}
-              <form onSubmit={handleSaveDivision}>
+              {disciplineError && <div className="alert alert-error mb-4"><span>{disciplineError}</span></div>}
+              <form onSubmit={handleSaveDiscipline}>
                 <div className="form-control mb-4">
                   <label className="label"><span className="label-text">Department</span></label>
                   <select
                     className="select select-bordered"
-                    value={divisionForm.departmentId}
-                    onChange={(e) => setDivisionForm({ ...divisionForm, departmentId: e.target.value })}
+                    value={disciplineForm.departmentId}
+                    onChange={(e) => setDisciplineForm({ ...disciplineForm, departmentId: e.target.value })}
                     required
                   >
                     <option value="">Select Department</option>
                     {departments.map((d) => (
                       <option key={d._id} value={d._id}>
-                        {d.name}{d.faculty?.name ? ` (${d.faculty.name})` : ''}
+                        {d.name}
                       </option>
                     ))}
                   </select>
@@ -403,20 +408,20 @@ const ProgramsPage = () => {
                   <input
                     type="text"
                     className="input input-bordered"
-                    value={divisionForm.name}
-                    onChange={(e) => setDivisionForm({ ...divisionForm, name: e.target.value })}
+                    value={disciplineForm.name}
+                    onChange={(e) => setDisciplineForm({ ...disciplineForm, name: e.target.value })}
                     required
                   />
                 </div>
                 <div className="modal-action">
-                  <button type="button" onClick={() => setIsDivisionModalOpen(false)} className="btn btn-ghost">Cancel</button>
-                  <button type="submit" className={`btn btn-primary ${divisionSaving ? 'loading' : ''}`} disabled={divisionSaving}>
-                    {divisionSaving ? 'Saving...' : 'Create'}
+                  <button type="button" onClick={() => setIsDisciplineModalOpen(false)} className="btn btn-ghost">Cancel</button>
+                  <button type="submit" className={`btn btn-primary ${disciplineSaving ? 'loading' : ''}`} disabled={disciplineSaving}>
+                    {disciplineSaving ? 'Saving...' : 'Create'}
                   </button>
                 </div>
               </form>
             </div>
-            <div className="modal-backdrop bg-black/50" onClick={() => setIsDivisionModalOpen(false)}></div>
+            <div className="modal-backdrop bg-black/50" onClick={() => setIsDisciplineModalOpen(false)}></div>
           </dialog>
         )}
 
