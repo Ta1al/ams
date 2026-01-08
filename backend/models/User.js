@@ -25,6 +25,11 @@ const userSchema = new mongoose.Schema({
     ref: 'Program',
     // relevant for students
   },
+  class: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Class',
+    // required for students (enforced in controllers)
+  },
   department: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Department',

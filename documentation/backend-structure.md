@@ -1,7 +1,7 @@
 # Backend Structure
 
 > **Note**: This documentation is automatically generated from the backend code.
-> Last updated: 2026-01-07T16:21:43.872Z
+> Last updated: 2026-01-08T17:24:15.565Z
 
 ## Architecture Overview
 
@@ -19,6 +19,24 @@ backend/
 
 ## Data Models
 
+### Class
+
+**Fields:**
+
+| Field | Type |
+|-------|------|
+| department | ObjectId |
+| discipline | ObjectId |
+| program | ObjectId |
+| session | Number |
+| endYear | Number |
+| section | String |
+
+**References:**
+- Department
+- Discipline
+- Program
+
 ### Course
 
 **Fields:**
@@ -28,13 +46,13 @@ backend/
 | name | String |
 | code | String |
 | department | ObjectId |
-| division | ObjectId |
+| discipline | ObjectId |
 | program | ObjectId |
 | teacher | ObjectId |
 
 **References:**
 - Department
-- Division
+- Discipline
 - Program
 - User
 
@@ -45,32 +63,22 @@ backend/
 | Field | Type |
 |-------|------|
 | name | String |
-| faculty | ObjectId |
 | headOfDepartment | ObjectId |
 
 **References:**
-- Faculty
 - User
 
-### Division
+### Discipline
 
 **Fields:**
 
 | Field | Type |
 |-------|------|
 | name | String |
-| department | ObjectId |
+| program | ObjectId |
 
 **References:**
-- Department
-
-### Faculty
-
-**Fields:**
-
-| Field | Type |
-|-------|------|
-| name | String |
+- Program
 
 ### Program
 
@@ -80,10 +88,10 @@ backend/
 |-------|------|
 | name | String |
 | level | String |
-| division | ObjectId |
+| department | ObjectId |
 
 **References:**
-- Division
+- Department
 
 ### User
 
@@ -96,10 +104,12 @@ backend/
 | password | String |
 | role | String |
 | program | ObjectId |
+| class | ObjectId |
 | department | ObjectId |
 
 **References:**
 - Program
+- Class
 - Department
 
 ## Data Hierarchy

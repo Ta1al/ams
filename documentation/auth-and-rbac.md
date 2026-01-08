@@ -132,8 +132,8 @@ Mounted under `backend/server.js`:
 Routes:
 
 - `GET /api/faculties` → `protect` → list faculties
-- `POST /api/faculties` → `protect` → `adminOnly` → create faculty
-- `DELETE /api/faculties/:id` → `protect` → `adminOnly` → delete faculty
+- `POST /api/disciplines` → `protect` → `adminOnly` → create discipline
+- `DELETE /api/disciplines/:id` → `protect` → `adminOnly` → delete discipline
 
 ### Courses
 

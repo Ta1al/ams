@@ -5,10 +5,9 @@ This document illustrates the data hierarchy and relationships within the Attend
 ## Hierarchy Overview
 
 The academic structure is organized as follows:
-1.  **Faculty**: The highest organizational unit (e.g., Faculty of Computing).
-2.  **Department**: Belong to a Faculty (e.g., Department of CS).
-3.  **Division**: Specialized units within a Department (e.g., AI Division).
-4.  **Program**: Academic degrees offered by a Division (e.g., BS AI).
+1.  **Department**: An academic department (e.g., Department of Computer Science).
+2.  **Program**: A degree program offered by a Department (e.g., BS, MS/MPhil/MBA, PhD, Diploma).
+3.  **Discipline**: A specialization/track under a Program (e.g., Data Science, Artificial Intelligence).
 
 5.  **Users**:
     *   **Students** are enrolled in a **Program**.
@@ -24,14 +23,14 @@ Fields:
 - `name` (required)
 - `code` (optional)
 - `department` (required, ref `Department`)
-- `division` (required, ref `Division`)
+- `discipline` (required, ref `Discipline`)
 - `program` (required, ref `Program`)
 - `teacher` (required, ref `User`)
 
 Consistency rules enforced on create/update (backend):
 
-- `division.department` must match the selected `department`.
-- `program.division` must match the selected `division`.
+- `program.department` must match the selected `department`.
+- `discipline.program` must match the selected `program`.
 - `teacher.role` must be `teacher`.
 - If the selected teacher has `department` set, it must match the selected `department`.
 
@@ -53,29 +52,23 @@ classDiagram
         +ObjectId department
     }
 
-    class Faculty {
-        +ObjectId _id
-        +String name
-    }
-
     class Department {
         +ObjectId _id
         +String name
-        +ObjectId faculty
         +ObjectId headOfDepartment
-    }
-
-    class Division {
-        +ObjectId _id
-        +String name
-        +ObjectId department
     }
 
     class Program {
         +ObjectId _id
         +String name
         +String level
-        +ObjectId division
+        +ObjectId department
+    }
+
+    class Discipline {
+        +ObjectId _id
+        +String name
+        +ObjectId program
     }
 
     class Course {
@@ -83,19 +76,18 @@ classDiagram
         +String name
         +String code
         +ObjectId department
-        +ObjectId division
+        +ObjectId discipline
         +ObjectId program
         +ObjectId teacher
     }
 
     %% Hierarchy Relationships
-    Faculty "1" --> "*" Department : contains
-    Department "1" --> "*" Division : contains
-    Division "1" --> "*" Program : offers
+    Department "1" --> "*" Program : offers
+    Program "1" --> "*" Discipline : contains
 
     %% Course Relationships
     Department "1" --> "*" Course : offers
-    Division "1" --> "*" Course : offers
+    Discipline "1" --> "*" Course : offers
     Program "1" --> "*" Course : offers
     User "1" --> "*" Course : teaches
 
@@ -111,12 +103,11 @@ classDiagram
 
 ```mermaid
 erDiagram
-    FACULTY ||--|{ DEPARTMENT : contains
-    DEPARTMENT ||--|{ DIVISION : contains
-    DIVISION ||--|{ PROGRAM : offers
+    DEPARTMENT ||--|{ PROGRAM : offers
+    PROGRAM ||--|{ DISCIPLINE : contains
 
     DEPARTMENT ||--|{ COURSE : offers
-    DIVISION ||--|{ COURSE : offers
+    DISCIPLINE ||--|{ COURSE : offers
     PROGRAM ||--|{ COURSE : offers
     USER ||--|{ COURSE : teaches
     
@@ -125,29 +116,23 @@ erDiagram
     
     DEPARTMENT |o--|| USER : "head is"
 
-    FACULTY {
-        ObjectId _id
-        String name
-    }
-
     DEPARTMENT {
         ObjectId _id
         String name
-        ObjectId faculty
         ObjectId headOfDepartment
     }
 
-    DIVISION {
+    DISCIPLINE {
         ObjectId _id
         String name
-        ObjectId department
+        ObjectId program
     }
 
     PROGRAM {
         ObjectId _id
         String name
         String level
-        ObjectId division
+        ObjectId department
     }
 
     COURSE {
@@ -155,7 +140,7 @@ erDiagram
         String name
         String code
         ObjectId department
-        ObjectId division
+        ObjectId discipline
         ObjectId program
         ObjectId teacher
     }

@@ -1,17 +1,11 @@
 const Department = require('../models/Department');
-const Faculty = require('../models/Faculty');
 
-// @desc    Get all departments (optional: ?facultyId=...)
+// @desc    Get all departments
 // @route   GET /api/departments
 // @access  Public/Protected
 const getDepartments = async (req, res) => {
   try {
-    const filter = {};
-    if (req.query.facultyId) {
-      filter.faculty = req.query.facultyId;
-    }
-
-    const departments = await Department.find(filter).populate('faculty', 'name');
+    const departments = await Department.find().sort({ name: 1 });
     res.status(200).json(departments);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -23,21 +17,14 @@ const getDepartments = async (req, res) => {
 // @access  Private/Admin
 const createDepartment = async (req, res) => {
   try {
-    const { name, facultyId, headOfDepartment } = req.body;
+    const { name, headOfDepartment } = req.body;
 
-    if (!name || !facultyId) {
-      return res.status(400).json({ message: 'Name and Faculty ID are required' });
-    }
-
-    // Verify Faculty exists
-    const facultyExists = await Faculty.findById(facultyId);
-    if (!facultyExists) {
-      return res.status(404).json({ message: 'Faculty not found' });
+    if (!name) {
+      return res.status(400).json({ message: 'Name is required' });
     }
 
     const department = await Department.create({
       name,
-      faculty: facultyId,
       headOfDepartment: headOfDepartment || null,
     });
 

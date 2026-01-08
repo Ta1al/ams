@@ -3,13 +3,13 @@ import { useAuth } from '../hooks/useAuth';
 import {
   LayoutDashboard,
   Users,
+  BookOpen,
   GraduationCap,
   CalendarCheck,
   ClipboardList,
   Settings,
   LogOut,
   Menu,
-  Building2,
 } from 'lucide-react';
 
 const DashboardLayout = ({ children }) => {
@@ -32,7 +32,8 @@ const DashboardLayout = ({ children }) => {
       return [
         ...baseItems,
         { path: '/admin/users', label: 'Users', icon: Users },
-        { path: '/admin/departments', label: 'Departments', icon: Building2 },
+        { path: '/admin/classes', label: 'Classes', icon: ClipboardList },
+        { path: '/admin/courses', label: 'Courses', icon: BookOpen },
         { path: '/admin/programs', label: 'Programs', icon: GraduationCap },
         { path: '/admin/settings', label: 'Settings', icon: Settings },
       ];

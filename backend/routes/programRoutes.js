@@ -5,7 +5,7 @@ const {
   createProgram,
   updateProgram,
   deleteProgram,
-  getDivisions,
+  getDepartments,
 } = require('../controllers/programController');
 const { protect, adminOnly } = require('../middleware/authMiddleware');
 
@@ -13,7 +13,7 @@ const { protect, adminOnly } = require('../middleware/authMiddleware');
 router.use(protect);
 router.use(adminOnly);
 
-router.get('/divisions', getDivisions);
+router.get('/departments', getDepartments);
 
 router.route('/')
   .get(getPrograms)

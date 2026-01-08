@@ -24,11 +24,11 @@ app.get("/", (req, res) => {
 });
 
 app.use('/api/auth', require('./routes/authRoutes'));
-app.use('/api/faculties', require('./routes/facultyRoutes'));
 app.use('/api/departments', require('./routes/departmentRoutes'));
-app.use('/api/divisions', require('./routes/divisionRoutes'));
 app.use('/api/programs', require('./routes/programRoutes'));
+app.use('/api/disciplines', require('./routes/disciplineRoutes'));
 app.use('/api/courses', require('./routes/courseRoutes'));
+app.use('/api/classes', require('./routes/classRoutes'));
 app.use('/api/dashboard', require('./routes/dashboardRoutes'));
 app.use('/api/users', require('./routes/userRoutes'));
 

@@ -3,10 +3,15 @@ import { AuthProvider } from './context/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
+import CourseDetailPage from './pages/CourseDetailPage';
 // Admin pages
 import UsersPage from './pages/admin/UsersPage';
 import ProgramsPage from './pages/admin/ProgramsPage';
+import DisciplinesPage from './pages/admin/DisciplinesPage';
+import CoursesPage from './pages/admin/CoursesPage';
+import ClassesPage from './pages/admin/ClassesPage';
 // Teacher pages
+import TeacherClassesPage from './pages/teacher/ClassesPage';
 import TeacherStudentsPage from './pages/teacher/StudentsPage';
 import TeacherAttendancePage from './pages/teacher/AttendancePage';
 // Student pages
@@ -45,8 +50,41 @@ function App() {
               </ProtectedRoute>
             }
           />
+          <Route
+            path="/admin/disciplines"
+            element={
+              <ProtectedRoute allowedRoles={['admin']}>
+                <DisciplinesPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/courses"
+            element={
+              <ProtectedRoute allowedRoles={['admin']}>
+                <CoursesPage />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/admin/classes"
+            element={
+              <ProtectedRoute allowedRoles={['admin']}>
+                <ClassesPage />
+              </ProtectedRoute>
+            }
+          />
 
           {/* Teacher Routes */}
+          <Route
+            path="/teacher/classes"
+            element={
+              <ProtectedRoute allowedRoles={['teacher', 'admin']}>
+                <TeacherClassesPage />
+              </ProtectedRoute>
+            }
+          />
           <Route
             path="/teacher/students"
             element={
@@ -60,6 +98,16 @@ function App() {
             element={
               <ProtectedRoute allowedRoles={['teacher', 'admin']}>
                 <TeacherAttendancePage />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Course Detail */}
+          <Route
+            path="/courses/:courseId"
+            element={
+              <ProtectedRoute allowedRoles={['admin', 'teacher', 'student']}>
+                <CourseDetailPage />
               </ProtectedRoute>
             }
           />

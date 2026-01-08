@@ -8,16 +8,18 @@ const programSchema = new mongoose.Schema({
   },
   level: {
     type: String,
-    enum: ['BS', 'MS', 'PhD'], 
+    enum: ['BS', 'MS', 'MPhil', 'MBA', 'PhD', 'Diploma'],
     required: true,
   },
-  division: {
+  department: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'Division',
+    ref: 'Department',
     required: true,
   }
 }, {
   timestamps: true,
 });
+
+programSchema.index({ name: 1, level: 1, department: 1 }, { unique: true });
 
 module.exports = mongoose.model('Program', programSchema);

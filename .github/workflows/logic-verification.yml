@@ -5,6 +5,7 @@ on:
     branches:
       - '**'
     paths:
+      - 'frontend/**'
       - 'backend/**'
       - 'frontend/**'
       - '.github/workflows/logic-verification.yml'

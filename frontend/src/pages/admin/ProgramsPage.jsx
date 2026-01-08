@@ -6,12 +6,12 @@ import DashboardLayout from '../../components/DashboardLayout';
 const ProgramsPage = () => {
   const { user } = useAuth();
   const [programs, setPrograms] = useState([]);
-  const [divisions, setDivisions] = useState([]);
+  const [departments, setDepartments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedProgram, setSelectedProgram] = useState(null);
   const [deleteConfirm, setDeleteConfirm] = useState(null);
-  const [formData, setFormData] = useState({ name: '', level: 'BS', division: '' });
+  const [formData, setFormData] = useState({ name: '', level: 'BS', department: '' });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
 
@@ -31,26 +31,26 @@ const ProgramsPage = () => {
     }
   }, [user?.token, apiUrl]);
 
-  const fetchDivisions = useCallback(async () => {
+  const fetchDepartments = useCallback(async () => {
     try {
-      const response = await fetch(`${apiUrl}/api/programs/divisions`, {
+      const response = await fetch(`${apiUrl}/api/programs/departments`, {
         headers: { Authorization: `Bearer ${user?.token}` },
       });
       const data = await response.json();
-      if (response.ok) setDivisions(data);
+      if (response.ok) setDepartments(data);
     } catch (error) {
-      console.error('Failed to fetch divisions:', error);
+      console.error('Failed to fetch departments:', error);
     }
   }, [user?.token, apiUrl]);
 
   useEffect(() => {
     fetchPrograms();
-    fetchDivisions();
-  }, [fetchPrograms, fetchDivisions]);
+    fetchDepartments();
+  }, [fetchPrograms, fetchDepartments]);
 
   const openAddModal = () => {
     setSelectedProgram(null);
-    setFormData({ name: '', level: 'BS', division: '' });
+    setFormData({ name: '', level: 'BS', department: '' });
     setError('');
     setIsModalOpen(true);
   };
@@ -60,7 +60,7 @@ const ProgramsPage = () => {
     setFormData({
       name: program.name,
       level: program.level,
-      division: program.division?._id || '',
+      department: program.department?._id || '',
     });
     setError('');
     setIsModalOpen(true);
@@ -159,7 +159,7 @@ const ProgramsPage = () => {
                     <tr>
                       <th>Name</th>
                       <th>Level</th>
-                      <th>Division</th>
+                      <th>Department</th>
                       <th className="text-right">Actions</th>
                     </tr>
                   </thead>
@@ -173,7 +173,7 @@ const ProgramsPage = () => {
                           </span>
                         </td>
                         <td className="text-base-content/70">
-                          {p.division?.name || 'N/A'}
+                          {p.department?.name || 'N/A'}
                         </td>
                         <td className="text-right">
                           <div className="flex justify-end gap-2">
@@ -222,21 +222,24 @@ const ProgramsPage = () => {
                   >
                     <option value="BS">Bachelor (BS)</option>
                     <option value="MS">Master (MS)</option>
+                    <option value="MPhil">Master (MPhil)</option>
+                    <option value="MBA">Master (MBA)</option>
                     <option value="PhD">Doctorate (PhD)</option>
+                    <option value="Diploma">Diploma</option>
                   </select>
                 </div>
                 <div className="form-control mb-6">
-                  <label className="label"><span className="label-text">Division</span></label>
+                  <label className="label"><span className="label-text">Department</span></label>
                   <select
                     className="select select-bordered"
-                    value={formData.division}
-                    onChange={(e) => setFormData({ ...formData, division: e.target.value })}
+                    value={formData.department}
+                    onChange={(e) => setFormData({ ...formData, department: e.target.value })}
                     required
                   >
-                    <option value="">Select Division</option>
-                    {divisions.map((d) => (
+                    <option value="">Select Department</option>
+                    {departments.map((d) => (
                       <option key={d._id} value={d._id}>
-                        {d.name} ({d.department?.name})
+                        {d.name}
                       </option>
                     ))}
                   </select>

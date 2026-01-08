@@ -1,15 +1,20 @@
 import { useState, useEffect, useCallback } from 'react';
+import { useLocation } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
 import { CalendarCheck, Users, Check, X } from 'lucide-react';
 import DashboardLayout from '../../components/DashboardLayout';
 
 const AttendancePage = () => {
   const { user } = useAuth();
+  const location = useLocation();
+  const [classes, setClasses] = useState([]);
+  const [selectedClassId, setSelectedClassId] = useState('');
   const [students, setStudents] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [attendance, setAttendance] = useState({});
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [error, setError] = useState('');
 
   const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5001';
   const today = new Date().toLocaleDateString('en-US', { 
@@ -19,34 +24,75 @@ const AttendancePage = () => {
     day: 'numeric' 
   });
 
-  const fetchStudents = useCallback(async () => {
+  const fetchClasses = useCallback(async () => {
     try {
-      const response = await fetch(`${apiUrl}/api/users`, {
+      setError('');
+      const query = user?.department ? `?department=${user.department}` : '';
+      const response = await fetch(`${apiUrl}/api/classes${query}`, {
         headers: { Authorization: `Bearer ${user?.token}` },
       });
       const data = await response.json();
       if (response.ok) {
-        const studentUsers = Array.isArray(data) 
-          ? data.filter((u) => u.role === 'student')
-          : [];
-        setStudents(studentUsers);
-        // Initialize attendance state
-        const initialAttendance = {};
-        studentUsers.forEach((s) => {
-          initialAttendance[s._id] = null; // null = not marked, true = present, false = absent
-        });
-        setAttendance(initialAttendance);
+        setClasses(Array.isArray(data) ? data : []);
+      } else {
+        throw new Error(data?.message || 'Failed to load classes');
       }
-    } catch (error) {
-      console.error('Failed to fetch students:', error);
+    } catch (err) {
+      setError(err.message);
+      setClasses([]);
+    }
+  }, [user?.token, user?.department, apiUrl]);
+
+  const fetchStudentsForClass = useCallback(async (classId) => {
+    if (!classId) return;
+
+    try {
+      setError('');
+      setLoading(true);
+      const response = await fetch(`${apiUrl}/api/classes/${classId}/students`, {
+        headers: { Authorization: `Bearer ${user?.token}` },
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data?.message || 'Failed to load students');
+      }
+      const studentUsers = Array.isArray(data) ? data : [];
+      setStudents(studentUsers);
+
+      const initialAttendance = {};
+      studentUsers.forEach((s) => {
+        initialAttendance[s._id] = null;
+      });
+      setAttendance(initialAttendance);
+      setSaved(false);
+    } catch (err) {
+      setError(err.message);
+      setStudents([]);
+      setAttendance({});
     } finally {
       setLoading(false);
     }
   }, [user?.token, apiUrl]);
 
   useEffect(() => {
-    fetchStudents();
-  }, [fetchStudents]);
+    fetchClasses();
+  }, [fetchClasses]);
+
+  useEffect(() => {
+    const initialClassId = location?.state?.classId;
+    if (initialClassId && !selectedClassId) {
+      setSelectedClassId(initialClassId);
+    }
+  }, [location?.state?.classId, selectedClassId]);
+
+  useEffect(() => {
+    if (!selectedClassId) {
+      setStudents([]);
+      setAttendance({});
+      return;
+    }
+    fetchStudentsForClass(selectedClassId);
+  }, [selectedClassId, fetchStudentsForClass]);
 
   const markAttendance = (studentId, status) => {
     setAttendance((prev) => ({ ...prev, [studentId]: status }));
@@ -105,10 +151,45 @@ const AttendancePage = () => {
             <button 
               onClick={saveAttendance} 
               className={`btn btn-primary ${saving ? 'loading' : ''}`}
-              disabled={saving || stats.unmarked === students.length}
+              disabled={saving || !selectedClassId || stats.unmarked === students.length}
             >
               {saving ? 'Saving...' : saved ? 'Saved!' : 'Save Attendance'}
             </button>
+          </div>
+        </div>
+
+        {error ? (
+          <div className="alert alert-error">
+            <span>{error}</span>
+          </div>
+        ) : null}
+
+        <div className="card bg-base-100 shadow-xl">
+          <div className="card-body">
+            <div className="flex flex-col md:flex-row gap-4 md:items-end">
+              <div className="form-control flex-1">
+                <label className="label">
+                  <span className="label-text">Select Class</span>
+                </label>
+                <select
+                  className="select select-bordered"
+                  value={selectedClassId}
+                  onChange={(e) => setSelectedClassId(e.target.value)}
+                >
+                  <option value="">Choose a class</option>
+                  {classes.map((c) => (
+                    <option key={c._id} value={c._id}>
+                      {c.program?.name} ({c.program?.level}) · {c.sessionLabel || `${c.session?.startYear}-${c.session?.endYear}`} · {c.section}
+                    </option>
+                  ))}
+                </select>
+                <label className="label">
+                  <span className="label-text-alt text-base-content/60">
+                    Students shown below are only from the selected class.
+                  </span>
+                </label>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -131,10 +212,15 @@ const AttendancePage = () => {
         {/* Students List */}
         <div className="card bg-base-100 shadow-xl">
           <div className="card-body">
-            {students.length === 0 ? (
+            {!selectedClassId ? (
               <div className="text-center py-12">
                 <Users className="w-16 h-16 mx-auto mb-4 text-base-content/30" />
-                <p className="text-base-content/60">No students found</p>
+                <p className="text-base-content/60">Select a class to load students</p>
+              </div>
+            ) : students.length === 0 ? (
+              <div className="text-center py-12">
+                <Users className="w-16 h-16 mx-auto mb-4 text-base-content/30" />
+                <p className="text-base-content/60">No students found in this class</p>
               </div>
             ) : (
               <div className="space-y-3">
