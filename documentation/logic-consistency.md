@@ -11,11 +11,11 @@ This document tracks consistency checks for the backend logic.
 
 The following relationships are defined:
 
-- **Class** references: Department, Division, Program
-- **Course** references: Department, Division, Program, User
-- **Department** references: Faculty, User
-- **Division** references: Department
-- **Program** references: Division
+- **Class** references: Department, Program, Discipline
+- **Course** references: Department, Program, Discipline, User
+- **Department** references: User
+- **Program** references: Department
+- **Discipline** references: Program
 - **User** references: Program, Class, Department
 
 ## Controller Coverage
