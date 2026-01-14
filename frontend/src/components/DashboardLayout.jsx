@@ -10,6 +10,7 @@ import {
   Settings,
   LogOut,
   Menu,
+  FileText,
 } from 'lucide-react';
 
 const DashboardLayout = ({ children }) => {
@@ -45,6 +46,7 @@ const DashboardLayout = ({ children }) => {
         { path: '/teacher/classes', label: 'My Classes', icon: ClipboardList },
         { path: '/teacher/attendance', label: 'Mark Attendance', icon: CalendarCheck },
         { path: '/teacher/students', label: 'Students', icon: Users },
+        { path: '/teacher/assignments', label: 'Assignments', icon: FileText },
       ];
     }
 
@@ -53,6 +55,7 @@ const DashboardLayout = ({ children }) => {
       ...baseItems,
       { path: '/student/attendance', label: 'My Attendance', icon: CalendarCheck },
       { path: '/student/schedule', label: 'Schedule', icon: ClipboardList },
+      { path: '/student/assignments', label: 'Assignments', icon: FileText },
     ];
   };
 
