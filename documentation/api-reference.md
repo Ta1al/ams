@@ -1,13 +1,36 @@
 # API Reference
 
 > **Note**: This documentation is automatically generated from the backend code.
-> Last updated: 2026-01-14T15:26:33.794Z
+> Last updated: 2026-01-14T16:22:29.067Z
 
 ## Overview
 
 This document provides a comprehensive reference for all API endpoints in the AMS backend.
 
 ## Endpoints by Controller
+
+### assignmentController
+
+#### `POST /api/assignments`
+
+#### `GET /api/assignments/course/:courseId`
+
+#### `GET /api/assignments/:id`
+
+#### `PUT /api/assignments/:id`
+
+#### `DELETE /api/assignments/:id`
+
+#### `GET /api/assignments/:id/submissions`
+
+**Handler Functions:**
+- `ensureCourseTeacher`
+- `createAssignment`
+- `getAssignments`
+- `getAssignmentById`
+- `updateAssignment`
+- `deleteAssignment`
+- `getAssignmentSubmissions`
 
 ### attendanceController
 
@@ -150,6 +173,34 @@ This document provides a comprehensive reference for all API endpoints in the AM
 - `updateProgram`
 - `deleteProgram`
 
+### submissionController
+
+#### `POST /api/submissions`
+
+#### `GET /api/submissions/:id`
+
+#### `GET /api/submissions/my-submissions`
+
+#### `PUT /api/submissions/:id`
+
+#### `PUT /api/submissions/:id/grade`
+
+#### `POST /api/submissions/bulk-grade`
+
+#### `GET /api/submissions/student/:studentId`
+
+#### `GET /api/submissions/assignment/:assignmentId/student/:studentId`
+
+**Handler Functions:**
+- `createSubmission`
+- `getSubmission`
+- `getMySubmissions`
+- `updateSubmission`
+- `gradeSubmission`
+- `bulkGrade`
+- `getStudentSubmissions`
+- `getSubmissionByAssignmentAndStudent`
+
 ### userController
 
 #### `GET /api/users`
@@ -173,6 +224,20 @@ This document provides a comprehensive reference for all API endpoints in the AM
 ## Route Files
 
 > **Note**: Routes marked as `ROUTE` use `router.route()` which can handle multiple HTTP methods on the same path.
+
+### assignmentRoutes
+
+**Endpoints:**
+
+- `GET /course/:courseId`
+- `GET /:id`
+- `GET /:id/submissions`
+- `POST /`
+- `PUT /:id`
+- `DELETE /:id`
+
+**Middleware:**
+- middleware/authMiddleware
 
 ### attendanceRoutes
 
@@ -277,6 +342,22 @@ This document provides a comprehensive reference for all API endpoints in the AM
 
 - `ROUTE /`
 - `ROUTE /:id`
+
+**Middleware:**
+- middleware/authMiddleware
+
+### submissionRoutes
+
+**Endpoints:**
+
+- `GET /my-submissions`
+- `GET /assignment/:assignmentId/student/:studentId`
+- `GET /:id`
+- `GET /student/:studentId`
+- `POST /`
+- `POST /bulk-grade`
+- `PUT /:id`
+- `PUT /:id/grade`
 
 **Middleware:**
 - middleware/authMiddleware

@@ -1,7 +1,7 @@
 # Logic Consistency Report
 
 > **Note**: This report is automatically generated.
-> Last updated: 2026-01-14T15:26:33.802Z
+> Last updated: 2026-01-14T16:22:29.073Z
 
 ## Overview
 
@@ -13,7 +13,7 @@ The following relationships are defined:
 
 - **Attendance** references: User
 - **Class** references: Department, Division, Program
-- **Course** references: Department, Division, Program, User, User
+- **Course** references: Department, Discipline, Program, User, User
 - **Department** references: Faculty, User
 - **Discipline** references: Department
 - **Division** references: Department
@@ -24,6 +24,7 @@ The following relationships are defined:
 
 Each controller should have corresponding routes:
 
+- **assignmentController**: 7 functions, 6 documented routes
 - **attendanceController**: 9 functions, 0 documented routes
 - **authController**: 1 functions, 1 documented routes
 - **classController**: 6 functions, 6 documented routes
@@ -34,10 +35,12 @@ Each controller should have corresponding routes:
 - **divisionController**: 3 functions, 3 documented routes
 - **facultyController**: 3 functions, 3 documented routes
 - **programController**: 4 functions, 4 documented routes
+- **submissionController**: 8 functions, 8 documented routes
 - **userController**: 6 functions, 5 documented routes
 
 ## Middleware Usage
 
+- **assignmentRoutes**: 1 middleware(s) applied
 - **attendanceRoutes**: 1 middleware(s) applied
 - **authRoutes**: 0 middleware(s) applied
 - **classRoutes**: 1 middleware(s) applied
@@ -48,5 +51,6 @@ Each controller should have corresponding routes:
 - **divisionRoutes**: 1 middleware(s) applied
 - **facultyRoutes**: 1 middleware(s) applied
 - **programRoutes**: 1 middleware(s) applied
+- **submissionRoutes**: 1 middleware(s) applied
 - **userRoutes**: 1 middleware(s) applied
 

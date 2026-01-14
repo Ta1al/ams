@@ -1,7 +1,7 @@
 # Backend Structure
 
 > **Note**: This documentation is automatically generated from the backend code.
-> Last updated: 2026-01-14T15:26:33.801Z
+> Last updated: 2026-01-14T16:22:29.072Z
 
 ## Architecture Overview
 
@@ -73,7 +73,7 @@ backend/
 
 **References:**
 - Department
-- Division
+- Discipline
 - Program
 - User
 - User
@@ -183,7 +183,7 @@ Department
 ## Component Statistics
 
 - **Models**: 11
-- **Controllers**: 11
-- **Routes**: 11
+- **Controllers**: 13
+- **Routes**: 13
 - **Middleware**: 1
 
