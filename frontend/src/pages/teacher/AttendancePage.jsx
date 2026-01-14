@@ -201,7 +201,10 @@ const AttendancePage = () => {
       const method = existingAttendanceId ? 'PUT' : 'POST';
       const response = await fetch(url, {
         method,
-        headers,
+        headers: {
+          Authorization: `Bearer ${user?.token}`,
+          'Content-Type': 'application/json',
+        },
         body: JSON.stringify(payload),
       });
       const data = await response.json();
