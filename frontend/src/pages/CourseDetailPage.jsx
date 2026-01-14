@@ -122,7 +122,7 @@ const CourseDetailPage = () => {
               <CalendarCheck className="w-4 h-4" />
               Mark Attendance
             </button>
-            <button className="btn btn-ghost" onClick={() => navigate('/teacher/students')}>
+            <button className="btn btn-ghost" onClick={() => navigate(`/teacher/students?courseId=${courseId}`)}>
               <Users className="w-4 h-4" />
               View Students
             </button>

@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
-import { Plus, BookOpen, GraduationCap, Eye } from 'lucide-react';
+import { Plus, BookOpen, GraduationCap, Eye, Trash2 } from 'lucide-react';
 import DashboardLayout from '../../components/DashboardLayout';
 
 const CoursesPage = () => {
@@ -121,6 +121,28 @@ const CoursesPage = () => {
     }
   };
 
+  const handleDelete = async (courseId, courseName) => {
+    if (!confirm(`Are you sure you want to delete "${courseName}"? This action cannot be undone.`)) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`${apiUrl}/api/courses/${courseId}`, {
+        method: 'DELETE',
+        headers: {
+          Authorization: `Bearer ${user?.token}`,
+        },
+      });
+
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.message || 'Failed to delete course');
+
+      fetchCourses();
+    } catch (err) {
+      alert(`Error: ${err.message}`);
+    }
+  };
+
   if (loading) {
     return (
       <DashboardLayout>
@@ -171,18 +193,26 @@ const CoursesPage = () => {
                         <td className="font-medium">{c.name}</td>
                         <td className="text-base-content/70">{c.code || '—'}</td>
                         <td className="text-base-content/70">
-                          {c.program?.discipline?.name} ({c.program?.program})
+                          {c.program?.level || '—'}
                         </td>
-                        <td className="text-base-content/70">{c.discipline?.name}</td>
-                        <td className="text-base-content/70">{c.department?.name}</td>
-                        <td className="text-base-content/70">{c.teacher?.name}</td>
+                        <td className="text-base-content/70">{c.discipline?.name || '—'}</td>
+                        <td className="text-base-content/70">{c.department?.name || '—'}</td>
+                        <td className="text-base-content/70">{c.teacher?.name || '—'}</td>
                         <td className="text-right">
                           <div className="flex justify-end gap-2">
                             <button
                               className="btn btn-ghost btn-sm"
                               onClick={() => navigate(`/courses/${c._id}`)}
+                              title="View course"
                             >
                               <Eye className="w-4 h-4" />
+                            </button>
+                            <button
+                              className="btn btn-ghost btn-sm text-error hover:bg-error hover:text-error-content"
+                              onClick={() => handleDelete(c._id, c.name)}
+                              title="Delete course"
+                            >
+                              <Trash2 className="w-4 h-4" />
                             </button>
                           </div>
                         </td>
@@ -236,7 +266,7 @@ const CoursesPage = () => {
                     <option value="">Select program</option>
                     {programs.map((p) => (
                       <option key={p._id} value={p._id}>
-                        {p.discipline?.name} ({p.program}) – {p.discipline?.department?.name}
+                        {p.discipline?.name} ({p.level}) – {p.discipline?.department?.name}
                       </option>
                     ))}
                   </select>
