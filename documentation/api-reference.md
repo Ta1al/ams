@@ -1,7 +1,7 @@
 # API Reference
 
 > **Note**: This documentation is automatically generated from the backend code.
-> Last updated: 2026-01-14T16:22:29.067Z
+> Last updated: 2026-01-14T16:39:30.136Z
 
 ## Overview
 
@@ -352,8 +352,8 @@ This document provides a comprehensive reference for all API endpoints in the AM
 
 - `GET /my-submissions`
 - `GET /assignment/:assignmentId/student/:studentId`
-- `GET /:id`
 - `GET /student/:studentId`
+- `GET /:id`
 - `POST /`
 - `POST /bulk-grade`
 - `PUT /:id`
