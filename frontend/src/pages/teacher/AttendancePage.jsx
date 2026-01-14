@@ -1,140 +1,220 @@
 import { useState, useEffect, useCallback } from 'react';
-import { useLocation } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
-import { CalendarCheck, Users, Check, X } from 'lucide-react';
+import { CalendarCheck, Users, Check, X, Clock, AlertCircle } from 'lucide-react';
 import DashboardLayout from '../../components/DashboardLayout';
 
 const AttendancePage = () => {
   const { user } = useAuth();
-  const location = useLocation();
-  const [classes, setClasses] = useState([]);
-  const [selectedClassId, setSelectedClassId] = useState('');
-  const [students, setStudents] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [attendance, setAttendance] = useState({});
-  const [saving, setSaving] = useState(false);
-  const [saved, setSaved] = useState(false);
-  const [error, setError] = useState('');
-
   const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5001';
-  const today = new Date().toLocaleDateString('en-US', { 
-    weekday: 'long', 
-    year: 'numeric', 
-    month: 'long', 
-    day: 'numeric' 
-  });
 
-  const fetchClasses = useCallback(async () => {
+  const [courses, setCourses] = useState([]);
+  const [selectedCourseId, setSelectedCourseId] = useState('');
+  const [selectedDate, setSelectedDate] = useState(() => new Date().toISOString().slice(0, 10));
+  const [students, setStudents] = useState([]);
+  const [attendance, setAttendance] = useState({});
+  const [existingAttendanceId, setExistingAttendanceId] = useState('');
+  const [pastRecords, setPastRecords] = useState([]);
+
+  const [loadingCourses, setLoadingCourses] = useState(false);
+  const [loadingStudents, setLoadingStudents] = useState(false);
+  const [loadingAttendance, setLoadingAttendance] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
+
+  const resetMessages = () => {
+    setError('');
+    setSuccess('');
+  };
+
+  const fetchCourses = useCallback(async () => {
     try {
-      setError('');
-      const query = user?.department ? `?department=${user.department}` : '';
-      const response = await fetch(`${apiUrl}/api/classes${query}`, {
-        headers: { Authorization: `Bearer ${user?.token}` },
+      resetMessages();
+      setLoadingCourses(true);
+      const response = await fetch(`${apiUrl}/api/courses`, {
+        headers: {
+          Authorization: `Bearer ${user?.token}`,
+          'Content-Type': 'application/json',
+        },
       });
       const data = await response.json();
-      if (response.ok) {
-        setClasses(Array.isArray(data) ? data : []);
-      } else {
-        throw new Error(data?.message || 'Failed to load classes');
-      }
+      if (!response.ok) throw new Error(data?.message || 'Failed to load courses');
+      setCourses(Array.isArray(data) ? data : []);
     } catch (err) {
       setError(err.message);
-      setClasses([]);
+      setCourses([]);
+    } finally {
+      setLoadingCourses(false);
     }
-  }, [user?.token, user?.department, apiUrl]);
+  }, [apiUrl, user?.token]);
 
-  const fetchStudentsForClass = useCallback(async (classId) => {
-    if (!classId) return;
-
+  const fetchStudents = useCallback(async (courseId) => {
+    if (!courseId) return;
     try {
-      setError('');
-      setLoading(true);
-      const response = await fetch(`${apiUrl}/api/classes/${classId}/students`, {
-        headers: { Authorization: `Bearer ${user?.token}` },
+      resetMessages();
+      setLoadingStudents(true);
+      const response = await fetch(`${apiUrl}/api/courses/${courseId}/students`, {
+        headers: {
+          Authorization: `Bearer ${user?.token}`,
+          'Content-Type': 'application/json',
+        },
       });
       const data = await response.json();
-      if (!response.ok) {
-        throw new Error(data?.message || 'Failed to load students');
-      }
-      const studentUsers = Array.isArray(data) ? data : [];
-      setStudents(studentUsers);
+      if (!response.ok) throw new Error(data?.message || 'Failed to load students');
+      const list = Array.isArray(data) ? data : [];
+      setStudents(list);
 
-      const initialAttendance = {};
-      studentUsers.forEach((s) => {
-        initialAttendance[s._id] = null;
-      });
-      setAttendance(initialAttendance);
-      setSaved(false);
+      const initial = {};
+      list.forEach((s) => { initial[s._id] = null; });
+      setAttendance(initial);
     } catch (err) {
       setError(err.message);
       setStudents([]);
       setAttendance({});
     } finally {
-      setLoading(false);
+      setLoadingStudents(false);
     }
-  }, [user?.token, apiUrl]);
+  }, [apiUrl, user?.token]);
 
-  useEffect(() => {
-    fetchClasses();
-  }, [fetchClasses]);
+  const fetchAttendance = useCallback(async (courseId) => {
+    if (!courseId) return;
+    try {
+      resetMessages();
+      setLoadingAttendance(true);
+      const response = await fetch(`${apiUrl}/api/attendance/course/${courseId}`, {
+        headers: {
+          Authorization: `Bearer ${user?.token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data?.message || 'Failed to load attendance');
+      const list = Array.isArray(data) ? data : [];
+      setPastRecords(list);
 
-  useEffect(() => {
-    const initialClassId = location?.state?.classId;
-    if (initialClassId && !selectedClassId) {
-      setSelectedClassId(initialClassId);
+      // If there is a record for selectedDate, prefill
+      const existingForDate = list.find((rec) => new Date(rec.date).toISOString().slice(0, 10) === selectedDate);
+      if (existingForDate) {
+        const mapped = {};
+        existingForDate.studentRecords.forEach((sr) => {
+          mapped[sr.student?._id || sr.student] = sr.status;
+        });
+        setAttendance((prev) => ({ ...prev, ...mapped }));
+        setExistingAttendanceId(existingForDate._id);
+      } else {
+        setExistingAttendanceId('');
+      }
+    } catch (err) {
+      setError(err.message);
+      setPastRecords([]);
+      setExistingAttendanceId('');
+    } finally {
+      setLoadingAttendance(false);
     }
-  }, [location?.state?.classId, selectedClassId]);
+  }, [apiUrl, user?.token, selectedDate]);
 
   useEffect(() => {
-    if (!selectedClassId) {
+    fetchCourses();
+  }, [fetchCourses]);
+
+  useEffect(() => {
+    if (!selectedCourseId) {
       setStudents([]);
       setAttendance({});
+      setPastRecords([]);
+      setExistingAttendanceId('');
       return;
     }
-    fetchStudentsForClass(selectedClassId);
-  }, [selectedClassId, fetchStudentsForClass]);
+    fetchStudents(selectedCourseId);
+    fetchAttendance(selectedCourseId);
+  }, [selectedCourseId, fetchStudents, fetchAttendance]);
+
+  useEffect(() => {
+    if (!selectedCourseId) return;
+    // when date changes, check if we already have a record for that date
+    const existingForDate = pastRecords.find((rec) => new Date(rec.date).toISOString().slice(0, 10) === selectedDate);
+    if (existingForDate) {
+      const mapped = {};
+      existingForDate.studentRecords.forEach((sr) => {
+        mapped[sr.student?._id || sr.student] = sr.status;
+      });
+      setAttendance((prev) => ({ ...prev, ...mapped }));
+      setExistingAttendanceId(existingForDate._id);
+    } else {
+      const reset = {};
+      students.forEach((s) => { reset[s._id] = null; });
+      setAttendance(reset);
+      setExistingAttendanceId('');
+    }
+  }, [selectedDate, selectedCourseId, pastRecords, students]);
 
   const markAttendance = (studentId, status) => {
     setAttendance((prev) => ({ ...prev, [studentId]: status }));
-    setSaved(false);
+    setSuccess('');
   };
 
   const markAllPresent = () => {
-    const newAttendance = {};
-    students.forEach((s) => {
-      newAttendance[s._id] = true;
-    });
-    setAttendance(newAttendance);
-    setSaved(false);
+    const next = {};
+    students.forEach((s) => { next[s._id] = 'present'; });
+    setAttendance(next);
+    setSuccess('');
   };
+
+  const stats = (() => {
+    const values = Object.values(attendance || {});
+    const present = values.filter((v) => v === 'present').length;
+    const absent = values.filter((v) => v === 'absent').length;
+    const late = values.filter((v) => v === 'late').length;
+    const unmarked = values.filter((v) => v === null || v === undefined).length;
+    return { present, absent, late, unmarked };
+  })();
 
   const saveAttendance = async () => {
-    setSaving(true);
-    // Simulate saving - in real app, send to backend
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-    setSaving(false);
-    setSaved(true);
-    // Show success message
+    if (!selectedCourseId) {
+      setError('Select a course first');
+      return;
+    }
+
+    const payload = {
+      course: selectedCourseId,
+      date: selectedDate,
+      studentRecords: Object.entries(attendance).map(([student, status]) => ({ student, status })),
+    };
+
+    if (!payload.studentRecords.length) {
+      setError('No students to mark');
+      return;
+    }
+
+    const allUnmarked = payload.studentRecords.every((rec) => !rec.status);
+    if (allUnmarked) {
+      setError('Please mark at least one student');
+      return;
+    }
+
+    try {
+      resetMessages();
+      setSaving(true);
+      const url = existingAttendanceId
+        ? `${apiUrl}/api/attendance/${existingAttendanceId}`
+        : `${apiUrl}/api/attendance`;
+      const method = existingAttendanceId ? 'PUT' : 'POST';
+      const response = await fetch(url, {
+        method,
+        headers,
+        body: JSON.stringify(payload),
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data?.message || 'Failed to save attendance');
+      setSuccess(existingAttendanceId ? 'Attendance updated' : 'Attendance saved');
+      setExistingAttendanceId(data?._id || existingAttendanceId);
+      await fetchAttendance(selectedCourseId);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setSaving(false);
+    }
   };
-
-  const getAttendanceStats = () => {
-    const present = Object.values(attendance).filter((v) => v === true).length;
-    const absent = Object.values(attendance).filter((v) => v === false).length;
-    const unmarked = Object.values(attendance).filter((v) => v === null).length;
-    return { present, absent, unmarked };
-  };
-
-  const stats = getAttendanceStats();
-
-  if (loading) {
-    return (
-      <DashboardLayout>
-        <div className="flex items-center justify-center h-64">
-          <span className="loading loading-spinner loading-lg text-primary"></span>
-        </div>
-      </DashboardLayout>
-    );
-  }
 
   return (
     <DashboardLayout>
@@ -142,62 +222,87 @@ const AttendancePage = () => {
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>
             <h1 className="text-3xl font-bold">Mark Attendance</h1>
-            <p className="text-base-content/60 mt-1">{today}</p>
+            <p className="text-base-content/60 mt-1 flex items-center gap-2">
+              <Clock className="w-4 h-4" />
+              {new Date(selectedDate).toLocaleDateString()}
+            </p>
           </div>
           <div className="flex gap-2">
-            <button onClick={markAllPresent} className="btn btn-ghost">
+            <button onClick={markAllPresent} className="btn btn-ghost" disabled={!selectedCourseId || students.length === 0}>
               Mark All Present
             </button>
-            <button 
-              onClick={saveAttendance} 
+            <button
+              onClick={saveAttendance}
               className={`btn btn-primary ${saving ? 'loading' : ''}`}
-              disabled={saving || !selectedClassId || stats.unmarked === students.length}
+              disabled={saving || !selectedCourseId || students.length === 0}
             >
-              {saving ? 'Saving...' : saved ? 'Saved!' : 'Save Attendance'}
+              {saving ? 'Saving...' : existingAttendanceId ? 'Update Attendance' : 'Save Attendance'}
             </button>
           </div>
         </div>
 
         {error ? (
-          <div className="alert alert-error">
+          <div className="alert alert-error flex gap-2">
+            <AlertCircle className="w-5 h-5" />
             <span>{error}</span>
+          </div>
+        ) : null}
+        {success ? (
+          <div className="alert alert-success">
+            <span>{success}</span>
           </div>
         ) : null}
 
         <div className="card bg-base-100 shadow-xl">
-          <div className="card-body">
+          <div className="card-body space-y-4">
             <div className="flex flex-col md:flex-row gap-4 md:items-end">
               <div className="form-control flex-1">
                 <label className="label">
-                  <span className="label-text">Select Class</span>
+                  <span className="label-text">Select Course</span>
                 </label>
                 <select
                   className="select select-bordered"
-                  value={selectedClassId}
-                  onChange={(e) => setSelectedClassId(e.target.value)}
+                  value={selectedCourseId}
+                  onChange={(e) => setSelectedCourseId(e.target.value)}
+                  disabled={loadingCourses}
                 >
-                  <option value="">Choose a class</option>
-                  {classes.map((c) => (
+                  <option value="">Choose a course</option>
+                  {courses.map((c) => (
                     <option key={c._id} value={c._id}>
-                      {c.program?.discipline?.name} ({c.program?.program}) · {c.sessionLabel || `${c.session?.startYear}-${c.session?.endYear}`} · {c.section}
+                      {c.name} ({c.code || 'N/A'}) — {c.program?.discipline?.name || c.discipline?.name}
                     </option>
                   ))}
                 </select>
                 <label className="label">
                   <span className="label-text-alt text-base-content/60">
-                    Students shown below are only from the selected class.
+                    Only your courses are shown here.
                   </span>
                 </label>
+              </div>
+              <div className="form-control w-full md:w-56">
+                <label className="label">
+                  <span className="label-text">Date</span>
+                </label>
+                <input
+                  type="date"
+                  className="input input-bordered"
+                  value={selectedDate}
+                  onChange={(e) => setSelectedDate(e.target.value)}
+                />
               </div>
             </div>
           </div>
         </div>
 
         {/* Stats */}
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <div className="stat bg-success/10 rounded-xl">
             <div className="stat-title">Present</div>
             <div className="stat-value text-success">{stats.present}</div>
+          </div>
+          <div className="stat bg-warning/10 rounded-xl">
+            <div className="stat-title">Late</div>
+            <div className="stat-value text-warning">{stats.late}</div>
           </div>
           <div className="stat bg-error/10 rounded-xl">
             <div className="stat-title">Absent</div>
@@ -212,26 +317,32 @@ const AttendancePage = () => {
         {/* Students List */}
         <div className="card bg-base-100 shadow-xl">
           <div className="card-body">
-            {!selectedClassId ? (
+            {!selectedCourseId ? (
               <div className="text-center py-12">
                 <Users className="w-16 h-16 mx-auto mb-4 text-base-content/30" />
-                <p className="text-base-content/60">Select a class to load students</p>
+                <p className="text-base-content/60">Select a course to load students</p>
+              </div>
+            ) : loadingStudents ? (
+              <div className="flex items-center justify-center py-12">
+                <span className="loading loading-spinner loading-lg text-primary"></span>
               </div>
             ) : students.length === 0 ? (
               <div className="text-center py-12">
                 <Users className="w-16 h-16 mx-auto mb-4 text-base-content/30" />
-                <p className="text-base-content/60">No students found in this class</p>
+                <p className="text-base-content/60">No students enrolled in this course</p>
               </div>
             ) : (
               <div className="space-y-3">
                 {students.map((s) => (
-                  <div 
-                    key={s._id} 
+                  <div
+                    key={s._id}
                     className={`flex items-center justify-between p-4 rounded-xl border ${
-                      attendance[s._id] === true 
-                        ? 'bg-success/5 border-success/20' 
-                        : attendance[s._id] === false 
-                        ? 'bg-error/5 border-error/20' 
+                      attendance[s._id] === 'present'
+                        ? 'bg-success/5 border-success/20'
+                        : attendance[s._id] === 'absent'
+                        ? 'bg-error/5 border-error/20'
+                        : attendance[s._id] === 'late'
+                        ? 'bg-warning/5 border-warning/20'
                         : 'bg-base-200 border-transparent'
                     }`}
                   >
@@ -248,19 +359,21 @@ const AttendancePage = () => {
                     </div>
                     <div className="flex gap-2">
                       <button
-                        onClick={() => markAttendance(s._id, true)}
-                        className={`btn btn-sm ${
-                          attendance[s._id] === true ? 'btn-success' : 'btn-ghost'
-                        }`}
+                        onClick={() => markAttendance(s._id, 'present')}
+                        className={`btn btn-sm ${attendance[s._id] === 'present' ? 'btn-success' : 'btn-ghost'}`}
                       >
                         <Check className="w-4 h-4" />
                         Present
                       </button>
                       <button
-                        onClick={() => markAttendance(s._id, false)}
-                        className={`btn btn-sm ${
-                          attendance[s._id] === false ? 'btn-error' : 'btn-ghost'
-                        }`}
+                        onClick={() => markAttendance(s._id, 'late')}
+                        className={`btn btn-sm ${attendance[s._id] === 'late' ? 'btn-warning' : 'btn-ghost'}`}
+                      >
+                        Late
+                      </button>
+                      <button
+                        onClick={() => markAttendance(s._id, 'absent')}
+                        className={`btn btn-sm ${attendance[s._id] === 'absent' ? 'btn-error' : 'btn-ghost'}`}
                       >
                         <X className="w-4 h-4" />
                         Absent
@@ -268,6 +381,41 @@ const AttendancePage = () => {
                     </div>
                   </div>
                 ))}
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Past Attendance */}
+        <div className="card bg-base-100 shadow-xl">
+          <div className="card-body">
+            <h2 className="card-title">Past Attendance</h2>
+            {loadingAttendance ? (
+              <div className="flex items-center justify-center py-8">
+                <span className="loading loading-spinner loading-lg text-primary"></span>
+              </div>
+            ) : pastRecords.length === 0 ? (
+              <p className="text-base-content/60">No records yet.</p>
+            ) : (
+              <div className="overflow-x-auto mt-4">
+                <table className="table">
+                  <thead>
+                    <tr>
+                      <th>Date</th>
+                      <th>Marked By</th>
+                      <th>Students</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {pastRecords.map((rec) => (
+                      <tr key={rec._id} className="hover">
+                        <td>{new Date(rec.date).toLocaleDateString()}</td>
+                        <td>{rec.markedBy?.name || 'N/A'}</td>
+                        <td>{rec.studentRecords?.length || 0}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
             )}
           </div>

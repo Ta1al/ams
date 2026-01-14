@@ -25,6 +25,10 @@ const courseSchema = new mongoose.Schema({
     ref: 'Program',
     required: true,
   },
+  enrolledStudents: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+  }],
   teacher: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
