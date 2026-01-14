@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import DashboardLayout from '../components/DashboardLayout';
 import { useAuth } from '../hooks/useAuth';
+import { CoursesAPI, UsersAPI } from '../utils/api';
 
 const fallbackCourse = {
   name: 'Course Name TBD',
@@ -23,12 +24,7 @@ const fallbackCourse = {
   teacher: { name: 'Instructor TBD' },
 };
 
-const placeholderRoster = [
-  { id: 's-1', name: 'Alice Johnson', username: 'alice.j', status: 'Present' },
-  { id: 's-2', name: 'Brian Smith', username: 'bsmith', status: 'Absent' },
-  { id: 's-3', name: 'Chloe Kim', username: 'ckim', status: 'Present' },
-  { id: 's-4', name: 'David Lee', username: 'dlee', status: 'Late' },
-];
+const placeholderRoster = [];
 
 const placeholderTimeline = [
   { id: 't-1', label: 'Mon, Jan 5', status: 'Completed', attendance: '28 / 30' },
@@ -41,25 +37,23 @@ const CourseDetailPage = () => {
   const navigate = useNavigate();
   const { user, role } = useAuth();
   const [course, setCourse] = useState(null);
+  const [enrolledStudents, setEnrolledStudents] = useState([]);
+  const [studentsLoading, setStudentsLoading] = useState(false);
+  const [studentsError, setStudentsError] = useState('');
+  const [allStudents, setAllStudents] = useState([]);
+  const [selectedStudentId, setSelectedStudentId] = useState('');
+  const [enrollmentSaving, setEnrollmentSaving] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
-  const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5001';
+  const canManageEnrollment = role === 'admin' || role === 'teacher';
 
   useEffect(() => {
     const fetchCourse = async () => {
       setLoading(true);
       setError('');
       try {
-        const response = await fetch(`${apiUrl}/api/courses/${courseId}`, {
-          headers: { Authorization: `Bearer ${user?.token}` },
-        });
-        const data = await response.json();
-
-        if (!response.ok) {
-          throw new Error(data?.message || 'Unable to load course');
-        }
-
+        const data = await CoursesAPI.getById(courseId, user?.token);
         setCourse(data);
       } catch (err) {
         setError(err.message);
@@ -70,16 +64,90 @@ const CourseDetailPage = () => {
     };
 
     fetchCourse();
-  }, [apiUrl, courseId, user?.token]);
+  }, [courseId, user?.token]);
+
+  useEffect(() => {
+    const fetchEnrolled = async () => {
+      if (!user?.token || !courseId) return;
+      if (!canManageEnrollment) return;
+
+      setStudentsLoading(true);
+      setStudentsError('');
+      try {
+        const students = await CoursesAPI.getEnrolledStudents(courseId, user.token);
+        setEnrolledStudents(Array.isArray(students) ? students : []);
+      } catch (err) {
+        setStudentsError(err.message || 'Unable to load enrolled students');
+        setEnrolledStudents([]);
+      } finally {
+        setStudentsLoading(false);
+      }
+    };
+
+    fetchEnrolled();
+  }, [canManageEnrollment, courseId, user?.token]);
+
+  useEffect(() => {
+    const fetchAllStudents = async () => {
+      if (!user?.token) return;
+      if (!canManageEnrollment) return;
+
+      try {
+        const users = await UsersAPI.listStudents(user.token);
+        const students = Array.isArray(users) ? users.filter((u) => u.role === 'student') : [];
+        setAllStudents(students);
+      } catch {
+        setAllStudents([]);
+      }
+    };
+
+    fetchAllStudents();
+  }, [canManageEnrollment, user?.token]);
 
   const stats = useMemo(() => {
     return {
       attendanceRate: 86,
       totalSessions: 24,
-      totalStudents: placeholderRoster.length,
+      totalStudents: canManageEnrollment ? enrolledStudents.length : placeholderRoster.length,
       lastSession: 'Updated 2 days ago',
     };
-  }, []);
+  }, [canManageEnrollment, enrolledStudents.length]);
+
+  const courseProgramId = useMemo(() => {
+    const program = course?.program;
+    if (!program) return null;
+    if (typeof program === 'string') return program;
+    return program?._id || null;
+  }, [course?.program]);
+
+  const handleEnrollSelected = async () => {
+    if (!selectedStudentId) return;
+    setEnrollmentSaving(true);
+    setStudentsError('');
+    try {
+      await CoursesAPI.enrollStudents(courseId, [selectedStudentId], user?.token);
+      const refreshed = await CoursesAPI.getEnrolledStudents(courseId, user?.token);
+      setEnrolledStudents(Array.isArray(refreshed) ? refreshed : []);
+      setSelectedStudentId('');
+    } catch (err) {
+      setStudentsError(err.message || 'Failed to enroll student');
+    } finally {
+      setEnrollmentSaving(false);
+    }
+  };
+
+  const handleUnenroll = async (studentId) => {
+    setEnrollmentSaving(true);
+    setStudentsError('');
+    try {
+      await CoursesAPI.unenrollStudent(courseId, studentId, user?.token);
+      setEnrolledStudents((prev) => prev.filter((s) => String(s._id) !== String(studentId)));
+    } catch (err) {
+      setStudentsError(err.message || 'Failed to unenroll student');
+    } finally {
+      setEnrollmentSaving(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -267,37 +335,92 @@ const CourseDetailPage = () => {
             <div className="card-body">
               <h2 className="card-title flex items-center gap-2">
                 <Users className="w-5 h-5" />
-                Student Roster (sample)
+                Enrollment
               </h2>
               <div className="divider my-2"></div>
-              <div className="space-y-3">
-                {placeholderRoster.map((student) => (
-                  <div key={student.id} className="flex items-center justify-between p-3 rounded-xl bg-base-200">
-                    <div className="flex items-center gap-3">
-                      <div className="avatar placeholder">
-                        <div className="bg-primary text-primary-content rounded-full w-10">
-                          <span>{student.name.charAt(0)}</span>
-                        </div>
-                      </div>
-                      <div>
-                        <p className="font-semibold">{student.name}</p>
-                        <p className="text-sm text-base-content/60">{student.username}</p>
-                      </div>
+
+              {!canManageEnrollment ? (
+                <p className="text-sm text-base-content/60">Enrollment is managed by teachers/admins.</p>
+              ) : (
+                <div className="space-y-3">
+                  {studentsError ? (
+                    <div className="alert alert-warning">
+                      <span>{studentsError}</span>
                     </div>
-                    <span
-                      className={`badge ${
-                        student.status === 'Present'
-                          ? 'badge-success'
-                          : student.status === 'Absent'
-                          ? 'badge-error'
-                          : 'badge-warning'
-                      }`}
+                  ) : null}
+
+                  <div className="flex gap-2">
+                    <select
+                      className="select select-bordered w-full"
+                      value={selectedStudentId}
+                      onChange={(e) => setSelectedStudentId(e.target.value)}
+                      disabled={enrollmentSaving}
                     >
-                      {student.status}
-                    </span>
+                      <option value="">Select a student to enroll…</option>
+                      {allStudents
+                        .filter((s) => {
+                          if (!courseProgramId) return true;
+                          const studentProgramId = typeof s?.program === 'string' ? s.program : s?.program?._id;
+                          if (!studentProgramId) return false;
+                          return String(studentProgramId) === String(courseProgramId);
+                        })
+                        .map((s) => (
+                          <option key={s._id} value={s._id}>
+                            {s.name} ({s.username})
+                          </option>
+                        ))}
+                    </select>
+                    <button
+                      className={`btn btn-primary ${enrollmentSaving ? 'loading' : ''}`}
+                      type="button"
+                      onClick={handleEnrollSelected}
+                      disabled={!selectedStudentId || enrollmentSaving}
+                    >
+                      Enroll
+                    </button>
                   </div>
-                ))}
-              </div>
+
+                  {studentsLoading ? (
+                    <div className="flex items-center gap-2 text-sm text-base-content/60">
+                      <span className="loading loading-spinner loading-sm"></span>
+                      Loading roster…
+                    </div>
+                  ) : enrolledStudents.length === 0 ? (
+                    <p className="text-sm text-base-content/60">No students enrolled yet.</p>
+                  ) : (
+                    <div className="overflow-x-auto">
+                      <table className="table table-sm">
+                        <thead>
+                          <tr>
+                            <th>Student</th>
+                            <th className="text-right">Actions</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {enrolledStudents.map((s) => (
+                            <tr key={s._id}>
+                              <td>
+                                <div className="font-medium">{s.name}</div>
+                                <div className="text-xs text-base-content/60">{s.username}</div>
+                              </td>
+                              <td className="text-right">
+                                <button
+                                  className="btn btn-ghost btn-xs text-error hover:bg-error hover:text-error-content"
+                                  type="button"
+                                  onClick={() => handleUnenroll(s._id)}
+                                  disabled={enrollmentSaving}
+                                >
+                                  Remove
+                                </button>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           </div>
         </div>
