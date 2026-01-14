@@ -13,8 +13,11 @@ import ClassesPage from './pages/admin/ClassesPage';
 import TeacherClassesPage from './pages/teacher/ClassesPage';
 import TeacherStudentsPage from './pages/teacher/StudentsPage';
 import TeacherAttendancePage from './pages/teacher/AttendancePage';
+import TeacherAssignmentsPage from './pages/teacher/AssignmentsPage';
+import AssignmentGradingPage from './pages/teacher/AssignmentGradingPage';
 // Student pages
 import StudentAttendancePage from './pages/student/MyAttendancePage';
+import MyAssignmentsPage from './pages/student/MyAssignmentsPage';
 import './App.css';
 
 function App() {
@@ -92,6 +95,22 @@ function App() {
               </ProtectedRoute>
             }
           />
+          <Route
+            path="/teacher/assignments"
+            element={
+              <ProtectedRoute allowedRoles={['teacher', 'admin']}>
+                <TeacherAssignmentsPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/teacher/assignments/:assignmentId"
+            element={
+              <ProtectedRoute allowedRoles={['teacher', 'admin']}>
+                <AssignmentGradingPage />
+              </ProtectedRoute>
+            }
+          />
 
           {/* Course Detail */}
           <Route
@@ -109,6 +128,14 @@ function App() {
             element={
               <ProtectedRoute allowedRoles={['student']}>
                 <StudentAttendancePage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/student/assignments"
+            element={
+              <ProtectedRoute allowedRoles={['student']}>
+                <MyAssignmentsPage />
               </ProtectedRoute>
             }
           />

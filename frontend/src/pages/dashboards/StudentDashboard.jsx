@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
-import { CalendarCheck, BookOpen, TrendingUp, Clock } from 'lucide-react';
+import { CalendarCheck, BookOpen, TrendingUp, Clock, FileText } from 'lucide-react';
 
 const StudentDashboard = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -124,6 +126,23 @@ const StudentDashboard = () => {
               <p>No upcoming classes</p>
               <p className="text-sm mt-1">Your schedule will appear here</p>
             </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Quick Actions */}
+      <div className="card bg-base-100 shadow-xl">
+        <div className="card-body">
+          <h2 className="card-title">Quick Actions</h2>
+          <div className="flex flex-wrap gap-3 mt-4">
+            <button onClick={() => navigate('/student/attendance')} className="btn btn-primary">
+              <CalendarCheck className="w-4 h-4" />
+              My Attendance
+            </button>
+            <button onClick={() => navigate('/student/assignments')} className="btn btn-accent">
+              <FileText className="w-4 h-4" />
+              My Assignments
+            </button>
           </div>
         </div>
       </div>

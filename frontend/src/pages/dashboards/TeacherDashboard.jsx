@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
-import { Users, CalendarCheck, BookOpen, Clock } from 'lucide-react';
+import { Users, CalendarCheck, BookOpen, Clock, FileText } from 'lucide-react';
 
 const TeacherDashboard = () => {
   const { user } = useAuth();
@@ -117,6 +117,10 @@ const TeacherDashboard = () => {
             <button onClick={() => navigate('/teacher/attendance')} className="btn btn-primary">
               <CalendarCheck className="w-4 h-4" />
               Mark Attendance
+            </button>
+            <button onClick={() => navigate('/teacher/assignments')} className="btn btn-accent">
+              <FileText className="w-4 h-4" />
+              Assignments
             </button>
             <button onClick={() => navigate('/teacher/students')} className="btn btn-secondary">
               <Users className="w-4 h-4" />
