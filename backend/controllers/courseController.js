@@ -6,6 +6,14 @@ const isValidObjectId = (value) => {
   return typeof value === 'string' && value.match(/^[0-9a-fA-F]{24}$/);
 };
 
+const toIdString = (value) => {
+  if (!value) return null;
+  // ObjectId, populated doc, or plain string
+  if (typeof value === 'string') return value;
+  if (value._id) return String(value._id);
+  return String(value);
+};
+
 // @desc    Get courses (optionally filtered)
 // @route   GET /api/courses
 // @access  Private
@@ -236,16 +244,21 @@ const enrollStudents = async (req, res) => {
       return res.status(400).json({ message: 'No valid students found' });
     }
 
-    const invalid = students.filter((s) => String(s.program) !== String(course.program));
+    const courseProgramId = toIdString(course.program);
+    const invalid = students.filter((s) => toIdString(s.program) !== courseProgramId);
     if (invalid.length) {
-      return res.status(400).json({ message: 'One or more students are not in the course program' });
+      return res.status(400).json({
+        message: 'One or more students are not in the course program',
+        courseProgramId,
+        invalidStudentIds: invalid.map((s) => String(s._id)),
+      });
     }
 
     const result = await Course.findByIdAndUpdate(
       id,
       { $addToSet: { enrolledStudents: { $each: students.map((s) => s._id) } } },
       { new: true }
-    ).populate('enrolledStudents', 'name email role');
+    ).populate('enrolledStudents', 'name username role program');
 
     return res.status(200).json({
       message: `${students.length} students enrolled successfully`,
@@ -282,7 +295,7 @@ const bulkEnrollByProgram = async (req, res) => {
       id,
       { $addToSet: { enrolledStudents: { $each: students.map((s) => s._id) } } },
       { new: true }
-    ).populate('enrolledStudents', 'name email role');
+    ).populate('enrolledStudents', 'name username role program');
 
     return res.status(200).json({
       message: `${students.length} students enrolled successfully`,
@@ -346,7 +359,7 @@ const getStudentCourses = async (req, res) => {
         populate: { path: 'discipline', select: 'name department' },
       })
       .populate('teacher', 'name username role')
-      .populate('enrolledStudents', 'name email role');
+      .populate('enrolledStudents', 'name username role program');
 
     return res.status(200).json(courses);
   } catch (error) {
