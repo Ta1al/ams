@@ -1,13 +1,26 @@
 # API Reference
 
 > **Note**: This documentation is automatically generated from the backend code.
-> Last updated: 2026-01-08T19:50:29.947Z
+> Last updated: 2026-01-14T15:26:33.794Z
 
 ## Overview
 
 This document provides a comprehensive reference for all API endpoints in the AMS backend.
 
 ## Endpoints by Controller
+
+### attendanceController
+
+**Handler Functions:**
+- `ensureCourseAccess`
+- `markAttendance`
+- `getAttendanceForCourse`
+- `getStudentAttendance`
+- `getMyAttendance`
+- `updateAttendance`
+- `deleteAttendance`
+- `getCourseStats`
+- `generateReport`
 
 ### authController
 
@@ -56,6 +69,11 @@ This document provides a comprehensive reference for all API endpoints in the AM
 - `createCourse`
 - `updateCourse`
 - `deleteCourse`
+- `enrollStudents`
+- `bulkEnrollByProgram`
+- `unenrollStudent`
+- `getEnrolledStudents`
+- `getStudentCourses`
 
 ### dashboardController
 
@@ -156,6 +174,22 @@ This document provides a comprehensive reference for all API endpoints in the AM
 
 > **Note**: Routes marked as `ROUTE` use `router.route()` which can handle multiple HTTP methods on the same path.
 
+### attendanceRoutes
+
+**Endpoints:**
+
+- `GET /course/:courseId`
+- `GET /student/:studentId`
+- `GET /my-attendance`
+- `GET /stats/:courseId`
+- `GET /report`
+- `POST /`
+- `PUT /:id`
+- `DELETE /:id`
+
+**Middleware:**
+- middleware/authMiddleware
+
 ### authRoutes
 
 **Endpoints:**
@@ -177,6 +211,11 @@ This document provides a comprehensive reference for all API endpoints in the AM
 
 **Endpoints:**
 
+- `GET /student/:studentId`
+- `GET /:id/students`
+- `POST /:id/enroll`
+- `POST /:id/enroll-bulk`
+- `DELETE /:id/unenroll/:studentId`
 - `ROUTE /`
 - `ROUTE /:id`
 

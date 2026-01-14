@@ -1,7 +1,7 @@
 # Backend Structure
 
 > **Note**: This documentation is automatically generated from the backend code.
-> Last updated: 2026-01-08T19:50:29.953Z
+> Last updated: 2026-01-14T15:26:33.801Z
 
 ## Architecture Overview
 
@@ -18,6 +18,27 @@ backend/
 ```
 
 ## Data Models
+
+### Assignment
+
+**Fields:**
+
+| Field | Type |
+|-------|------|
+| uploadedAt | Date |
+
+### Attendance
+
+**Fields:**
+
+| Field | Type |
+|-------|------|
+| student | ObjectId |
+| status | String |
+| remarks | String |
+
+**References:**
+- User
 
 ### Class
 
@@ -54,6 +75,7 @@ backend/
 - Department
 - Division
 - Program
+- User
 - User
 
 ### Department
@@ -116,6 +138,14 @@ backend/
 - Discipline
 - Department
 
+### Submission
+
+**Fields:**
+
+| Field | Type |
+|-------|------|
+| uploadedAt | Date |
+
 ### User
 
 **Fields:**
@@ -152,8 +182,8 @@ Department
 
 ## Component Statistics
 
-- **Models**: 8
-- **Controllers**: 10
-- **Routes**: 10
+- **Models**: 11
+- **Controllers**: 11
+- **Routes**: 11
 - **Middleware**: 1
 
