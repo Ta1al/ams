@@ -1,11 +1,16 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../../hooks/useAuth';
-import { Users, Search } from 'lucide-react';
+import { useSearchParams, useNavigate } from 'react-router-dom';
+import { Users, Search, ArrowLeft } from 'lucide-react';
 import DashboardLayout from '../../components/DashboardLayout';
 
 const StudentsPage = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const courseId = searchParams.get('courseId');
   const [students, setStudents] = useState([]);
+  const [courseTitle, setCourseTitle] = useState('');
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
 
@@ -13,7 +18,26 @@ const StudentsPage = () => {
 
   const fetchStudents = useCallback(async () => {
     try {
-      const response = await fetch(`${apiUrl}/api/users?role=student`, {
+      let url;
+      let title = 'All Students';
+      
+      if (courseId) {
+        // Fetch only students enrolled in this course
+        url = `${apiUrl}/api/courses/${courseId}/students`;
+        // Also fetch course name for display
+        const courseResponse = await fetch(`${apiUrl}/api/courses/${courseId}`, {
+          headers: { Authorization: `Bearer ${user?.token}` },
+        });
+        if (courseResponse.ok) {
+          const courseData = await courseResponse.json();
+          setCourseTitle(courseData.name);
+        }
+      } else {
+        // Fetch all students (for backward compatibility)
+        url = `${apiUrl}/api/users?role=student`;
+      }
+
+      const response = await fetch(url, {
         headers: { Authorization: `Bearer ${user?.token}` },
       });
       const data = await response.json();
@@ -29,7 +53,7 @@ const StudentsPage = () => {
     } finally {
       setLoading(false);
     }
-  }, [user?.token, apiUrl]);
+  }, [user?.token, apiUrl, courseId]);
 
   useEffect(() => {
     fetchStudents();
@@ -53,9 +77,29 @@ const StudentsPage = () => {
   return (
     <DashboardLayout>
       <div className="space-y-6">
-        <div>
-          <h1 className="text-3xl font-bold">Students</h1>
-          <p className="text-base-content/60 mt-1">View all students in the system</p>
+        <div className="flex items-center justify-between">
+          <div>
+            {courseId ? (
+              <>
+                <div className="flex items-center gap-3 mb-2">
+                  <button 
+                    className="btn btn-ghost btn-sm"
+                    onClick={() => navigate(`/courses/${courseId}`)}
+                  >
+                    <ArrowLeft className="w-4 h-4" />
+                    Back to Course
+                  </button>
+                </div>
+                <h1 className="text-3xl font-bold">Students in {courseTitle || 'Course'}</h1>
+                <p className="text-base-content/60 mt-1">Enrolled students for this course</p>
+              </>
+            ) : (
+              <>
+                <h1 className="text-3xl font-bold">Students</h1>
+                <p className="text-base-content/60 mt-1">View all students in the system</p>
+              </>
+            )}
+          </div>
         </div>
 
         {/* Search */}
