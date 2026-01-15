@@ -8,6 +8,7 @@ const Discipline = require('./models/Discipline');
 const Program = require('./models/Program');
 const ClassModel = require('./models/Class');
 const Course = require('./models/Course');
+const ClassSession = require('./models/ClassSession');
 const connectDB = require('./config/db');
 
 // Load env vars
@@ -18,24 +19,19 @@ const seedDatabase = async () => {
     // Connect to database
     await connectDB();
 
-    // Hard reset database (dev only)
-    try {
-      await mongoose.connection.dropDatabase();
-      console.log('🧹 Dropped database');
-    } catch (err) {
-      console.warn(`⚠️ dropDatabase not permitted (${err.message}). Falling back to deleting collections...`);
-      const deletions = [
-        User.deleteMany({}),
-        Faculty.deleteMany({}),
-        Department.deleteMany({}),
-        Discipline.deleteMany({}),
-        Program.deleteMany({}),
-        ClassModel.deleteMany({}),
-        Course.deleteMany({}),
-      ];
-      await Promise.all(deletions);
-      console.log('🧹 Cleared collections');
-    }
+    // Hard reset database (dev only): drop individual collections (works with restricted Mongo users)
+    const deletions = [
+      User.deleteMany({}),
+      Faculty.deleteMany({}),
+      Department.deleteMany({}),
+      Discipline.deleteMany({}),
+      Program.deleteMany({}),
+      ClassModel.deleteMany({}),
+      Course.deleteMany({}),
+      ClassSession.deleteMany({}),
+    ];
+    await Promise.all(deletions);
+    console.log('🧹 Cleared collections');
 
     // Seed Admin User
     const adminPassword = process.env.ADMIN_PASSWORD || 'admin123';
@@ -173,6 +169,19 @@ const seedDatabase = async () => {
     });
 
     console.log('Course offerings created: PF101 (Regular, Self Support 1)');
+
+    // Seed a session occurring "now" (so attendance is allowed immediately)
+    const now = new Date();
+    const startTime = new Date(now.getTime() - 5 * 60 * 1000);
+    const endTime = new Date(now.getTime() + 55 * 60 * 1000);
+    await ClassSession.create({
+      course: courseRegular._id,
+      startTime,
+      endTime,
+      status: 'active',
+      createdBy: adminUser._id,
+    });
+    console.log('Class session created: active (PF101 Regular)');
 
     console.log('\n✅ Database seeded successfully!');
     console.log(`Admin username: ${adminUsername}`);
