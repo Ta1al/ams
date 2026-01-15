@@ -193,7 +193,7 @@ const ClassesPage = () => {
                   <tbody>
                     {classes.map((c) => (
                       <tr key={c._id} className="hover">
-                        <td className="font-medium">{c.program?.discipline?.name} ({c.program?.program})</td>
+                        <td className="font-medium">{c.program?.level} {c.program?.discipline?.name}</td>
                         <td className="text-base-content/70">{c.sessionLabel || `${c.session?.startYear}-${c.session?.endYear}`}</td>
                         <td className="text-base-content/70">{c.section}</td>
                         <td className="text-base-content/70">{c.discipline?.name}</td>
