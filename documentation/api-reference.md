@@ -1,7 +1,7 @@
 # API Reference
 
 > **Note**: This documentation is automatically generated from the backend code.
-> Last updated: 2026-01-15T16:35:53.881Z
+> Last updated: 2026-01-15T16:53:16.896Z
 
 ## Overview
 
@@ -80,6 +80,7 @@ This document provides a comprehensive reference for all API endpoints in the AM
 - `ensureCourseAccess`
 - `getSessions`
 - `createSession`
+- `createRecurringSessions`
 - `rescheduleSession`
 - `updateSessionStatus`
 
@@ -290,6 +291,7 @@ This document provides a comprehensive reference for all API endpoints in the AM
 
 - `GET /`
 - `POST /`
+- `POST /recurring`
 - `PUT /:id/reschedule`
 - `PUT /:id/status`
 

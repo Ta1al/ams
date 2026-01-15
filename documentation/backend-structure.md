@@ -1,7 +1,7 @@
 # Backend Structure
 
 > **Note**: This documentation is automatically generated from the backend code.
-> Last updated: 2026-01-15T16:35:53.886Z
+> Last updated: 2026-01-15T16:53:16.901Z
 
 ## Architecture Overview
 
@@ -65,8 +65,13 @@ backend/
 | Field | Type |
 |-------|------|
 | course | ObjectId |
+| room | String |
 | startTime | Date |
 | endTime | Date |
+| recurrence | String |
+| interval | Number |
+| count | Number |
+| until | Date |
 | status | String |
 | createdBy | ObjectId |
 | updatedBy | ObjectId |
