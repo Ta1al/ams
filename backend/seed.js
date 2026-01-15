@@ -82,26 +82,51 @@ const seedDatabase = async () => {
     });
     console.log('Program created: BS');
 
-    // Seed Class (Batch)
-    const classDoc = await ClassModel.create({
-      department: department._id,
-      discipline: discipline._id,
-      program: program._id,
-      section: 'Regular',
-      session: { startYear: 2025, endYear: 2026 },
-    });
-    console.log('Class created');
+    // Seed Classes (Sections)
+    const [classRegular, classSS1, classSS2] = await ClassModel.insertMany([
+      {
+        department: department._id,
+        discipline: discipline._id,
+        program: program._id,
+        section: 'Regular',
+        session: { startYear: 2025, endYear: 2026 },
+      },
+      {
+        department: department._id,
+        discipline: discipline._id,
+        program: program._id,
+        section: 'Self Support 1',
+        session: { startYear: 2025, endYear: 2026 },
+      },
+      {
+        department: department._id,
+        discipline: discipline._id,
+        program: program._id,
+        section: 'Self Support 2',
+        session: { startYear: 2025, endYear: 2026 },
+      },
+    ]);
+    console.log('Classes created: Regular, Self Support 1, Self Support 2');
 
-    // Seed Teacher
+    // Seed Teachers
     const teacherPassword = await bcrypt.hash('teacher123', salt);
-    const teacher = await User.create({
-      name: 'Teacher One',
-      username: 'teacher1',
-      password: teacherPassword,
-      role: 'teacher',
-      department: department._id,
-    });
-    console.log('Teacher created: teacher1 / teacher123');
+    const [teacher1, teacher2] = await User.insertMany([
+      {
+        name: 'Teacher One',
+        username: 'teacher1',
+        password: teacherPassword,
+        role: 'teacher',
+        department: department._id,
+      },
+      {
+        name: 'Teacher Two',
+        username: 'teacher2',
+        password: teacherPassword,
+        role: 'teacher',
+        department: department._id,
+      },
+    ]);
+    console.log('Teachers created: teacher1, teacher2 / teacher123');
 
     // Seed Students
     const studentPassword = await bcrypt.hash('student123', salt);
@@ -112,7 +137,7 @@ const seedDatabase = async () => {
         password: studentPassword,
         role: 'student',
         program: program._id,
-        class: classDoc._id,
+        class: classRegular._id,
       },
       {
         name: 'Student Two',
@@ -120,23 +145,34 @@ const seedDatabase = async () => {
         password: studentPassword,
         role: 'student',
         program: program._id,
-        class: classDoc._id,
+        class: classRegular._id,
       },
     ]);
     console.log(`Students created: ${students.map((s) => s.username).join(', ')} / student123`);
 
-    // Seed Course (must include class)
-    const course = await Course.create({
-      name: 'Introduction to Software Engineering',
-      code: 'SE101',
+    // Seed Course offerings (must include class)
+    const courseRegular = await Course.create({
+      name: 'Programming Fundamentals',
+      code: 'PF101',
       department: department._id,
       discipline: discipline._id,
       program: program._id,
-      class: classDoc._id,
-      teacher: teacher._id,
+      class: classRegular._id,
+      teacher: teacher1._id,
       enrolledStudents: students.map((s) => s._id),
     });
-    console.log('Course created: SE101');
+    const courseSS1 = await Course.create({
+      name: 'Programming Fundamentals',
+      code: 'PF101',
+      department: department._id,
+      discipline: discipline._id,
+      program: program._id,
+      class: classSS1._id,
+      teacher: teacher2._id,
+      enrolledStudents: [],
+    });
+
+    console.log('Course offerings created: PF101 (Regular, Self Support 1)');
 
     console.log('\n✅ Database seeded successfully!');
     console.log(`Admin username: ${adminUsername}`);
@@ -145,8 +181,8 @@ const seedDatabase = async () => {
     console.log('Teacher password: teacher123');
     console.log('Student username: student1');
     console.log('Student password: student123');
-    console.log(`Sample course code: ${course.code}`);
-    
+    console.log(`Sample course code: ${courseRegular.code}`);
+
     process.exit();
   } catch (error) {
     console.error(`Error: ${error.message}`);

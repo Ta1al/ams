@@ -17,7 +17,7 @@ The academic structure is organized as follows:
 
 ## Course
 
-`Course` links an academic offering to the hierarchy and assigns a teacher.
+`Course` represents a section-specific course offering: the same course code/name can exist multiple times across different class sections and/or teachers.
 
 Fields:
 
@@ -28,6 +28,10 @@ Fields:
 - `program` (required, ref `Program`)
 - `class` (required, ref `Class`) — batch the course is offered to
 - `teacher` (required, ref `User`)
+
+Uniqueness:
+
+- If `code` is set, the backend enforces uniqueness per offering as `(class, code, teacher)`.
 
 Consistency rules enforced on create/update (backend):
 
