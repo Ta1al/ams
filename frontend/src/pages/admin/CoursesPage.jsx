@@ -9,8 +9,6 @@ const CoursesPage = () => {
   const navigate = useNavigate();
   const [courses, setCourses] = useState([]);
   const [programs, setPrograms] = useState([]);
-  const [teachers, setTeachers] = useState([]);
-  const [classes, setClasses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -20,8 +18,6 @@ const CoursesPage = () => {
     name: '',
     code: '',
     program: '',
-    class: '',
-    teacher: '',
   });
 
   const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5001';
@@ -57,50 +53,25 @@ const CoursesPage = () => {
     }
   }, [apiUrl, user?.token]);
 
-  const fetchTeachers = useCallback(async () => {
-    try {
-      const response = await fetch(`${apiUrl}/api/users?role=teacher`, {
-        headers: { Authorization: `Bearer ${user?.token}` },
-      });
-      const data = await response.json();
-      if (response.ok && Array.isArray(data)) {
-        const teacherUsers = data.filter((u) => u.role === 'teacher');
-        setTeachers(teacherUsers);
-      }
-    } catch (err) {
-      console.error('Failed to fetch teachers:', err);
-    }
-  }, [apiUrl, user?.token]);
-
-  const fetchClasses = useCallback(async () => {
-    try {
-      const programId = formData.program;
-      const query = programId ? `?program=${programId}` : '';
-      const response = await fetch(`${apiUrl}/api/classes${query}`, {
-        headers: { Authorization: `Bearer ${user?.token}` },
-      });
-      const data = await response.json();
-      if (response.ok && Array.isArray(data)) setClasses(data);
-    } catch (err) {
-      console.error('Failed to fetch classes:', err);
-    }
-  }, [apiUrl, user?.token, formData.program]);
+  // Get unique courses (deduplicated by name, code, program, discipline, department)
+  const uniqueCourses = useMemo(() => {
+    const seen = new Set();
+    return courses.filter((course) => {
+      const key = `${course.name}|${course.code || ''}|${course.program?._id}|${course.discipline?._id}|${course.department?._id}`;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+  }, [courses]);
 
   useEffect(() => {
     fetchCourses();
     fetchPrograms();
-    fetchTeachers();
-  }, [fetchCourses, fetchPrograms, fetchTeachers]);
-
-  useEffect(() => {
-    fetchClasses();
-    // reset selected class if program changes
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [fetchClasses]);
+  }, [fetchCourses, fetchPrograms]);
 
   const openAddModal = () => {
     setEditingCourseId(null);
-    setFormData({ name: '', code: '', program: '', class: '', teacher: '' });
+    setFormData({ name: '', code: '', program: '' });
     setError('');
     setIsModalOpen(true);
   };
@@ -111,8 +82,6 @@ const CoursesPage = () => {
       name: course.name,
       code: course.code || '',
       program: course.program?._id || '',
-      class: course.class?._id || '',
-      teacher: course.teacher?._id || '',
     });
     setError('');
     setIsModalOpen(true);
@@ -122,10 +91,6 @@ const CoursesPage = () => {
     e.preventDefault();
     if (!selectedProgram) {
       setError('Select a program');
-      return;
-    }
-    if (!formData.class) {
-      setError('Select a class (batch)');
       return;
     }
     setSaving(true);
@@ -138,8 +103,6 @@ const CoursesPage = () => {
         program: selectedProgram._id,
         discipline: selectedProgram.discipline?._id,
         department: selectedProgram.discipline?.department?._id,
-        class: formData.class,
-        teacher: formData.teacher,
       };
 
       const url = editingCourseId 
@@ -230,48 +193,60 @@ const CoursesPage = () => {
                       <th>Program</th>
                       <th>Discipline</th>
                       <th>Department</th>
-                      <th>Teacher</th>
+                      <th>Offerings</th>
                       <th className="text-right">Actions</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {courses.map((c) => (
-                      <tr key={c._id} className="hover">
-                        <td className="font-medium">{c.name}</td>
-                        <td className="text-base-content/70">{c.code || '—'}</td>
-                        <td className="text-base-content/70">
-                          {c.program?.level || '—'}
-                        </td>
-                        <td className="text-base-content/70">{c.discipline?.name || '—'}</td>
-                        <td className="text-base-content/70">{c.department?.name || '—'}</td>
-                        <td className="text-base-content/70">{c.teacher?.name || '—'}</td>
-                        <td className="text-right">
-                          <div className="flex justify-end gap-2">
-                            <button
-                              className="btn btn-ghost btn-sm"
-                              onClick={() => navigate(`/courses/${c._id}`)}
-                              title="View course"
-                            >
-                              <Eye className="w-4 h-4" />
-                            </button>
-                            <button
-                              className="btn btn-ghost btn-sm"
-                              onClick={() => openEditModal(c)}
-                              title="Edit course"
-                            >
-                              <Edit className="w-4 h-4" />
-                            </button>
-                            <button
-                              className="btn btn-ghost btn-sm text-error hover:bg-error hover:text-error-content"
-                              onClick={() => handleDelete(c._id, c.name)}
-                              title="Delete course"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
+                    {uniqueCourses.map((c) => {
+                      const courseOfferings = courses.filter(
+                        (course) =>
+                          course.name === c.name &&
+                          course.code === c.code &&
+                          course.program?._id === c.program?._id &&
+                          course.discipline?._id === c.discipline?._id &&
+                          course.department?._id === c.department?._id
+                      );
+                      return (
+                        <tr key={c._id} className="hover">
+                          <td className="font-medium">{c.name}</td>
+                          <td className="text-base-content/70">{c.code || '—'}</td>
+                          <td className="text-base-content/70">
+                            {c.program?.level || '—'}
+                          </td>
+                          <td className="text-base-content/70">{c.discipline?.name || '—'}</td>
+                          <td className="text-base-content/70">{c.department?.name || '—'}</td>
+                          <td className="text-base-content/70">
+                            <span className="badge badge-info">{courseOfferings.length}</span>
+                          </td>
+                          <td className="text-right">
+                            <div className="flex justify-end gap-2">
+                              <button
+                                className="btn btn-ghost btn-sm"
+                                onClick={() => navigate(`/admin/courses/${c._id}/offerings`)}
+                                title="View course offerings"
+                              >
+                                <Eye className="w-4 h-4" />
+                              </button>
+                              <button
+                                className="btn btn-ghost btn-sm"
+                                onClick={() => openEditModal(c)}
+                                title="Edit course"
+                              >
+                                <Edit className="w-4 h-4" />
+                              </button>
+                              <button
+                                className="btn btn-ghost btn-sm text-error hover:bg-error hover:text-error-content"
+                                onClick={() => handleDelete(c._id, c.name)}
+                                title="Delete course"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>
@@ -314,7 +289,7 @@ const CoursesPage = () => {
                   <select
                     className="select select-bordered"
                     value={formData.program}
-                    onChange={(e) => setFormData({ ...formData, program: e.target.value, class: '' })}
+                    onChange={(e) => setFormData({ ...formData, program: e.target.value })}
                     required
                   >
                     <option value="">Select program</option>
@@ -326,48 +301,13 @@ const CoursesPage = () => {
                   </select>
                 </div>
 
-                <div className="form-control">
-                  <label className="label"><span className="label-text">Class (Batch)</span></label>
-                  <select
-                    className="select select-bordered"
-                    value={formData.class}
-                    onChange={(e) => setFormData({ ...formData, class: e.target.value })}
-                    required
-                    disabled={!formData.program}
-                  >
-                    <option value="">{formData.program ? 'Select class' : 'Select program first'}</option>
-                    {classes.map((c) => (
-                      <option key={c._id} value={c._id}>
-                        {c.program?.level || 'Level'} – {c.section} ({c.sessionLabel || `${c.session?.startYear}-${c.session?.endYear}`})
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <div className="form-control">
-                  <label className="label"><span className="label-text">Teacher</span></label>
-                  <select
-                    className="select select-bordered"
-                    value={formData.teacher}
-                    onChange={(e) => setFormData({ ...formData, teacher: e.target.value })}
-                    required
-                  >
-                    <option value="">Select teacher</option>
-                    {teachers.map((t) => (
-                      <option key={t._id} value={t._id}>{t.name} ({t.username})</option>
-                    ))}
-                  </select>
-                </div>
-
                 <div className="bg-base-200 rounded-lg p-3 text-sm flex flex-col gap-1">
                   <div className="flex items-center gap-2">
                     <GraduationCap className="w-4 h-4" />
-                    <span className="font-semibold">Department / Discipline</span>
+                    <span className="font-semibold">About Course Assignments</span>
                   </div>
-                  <p>
-                    {selectedProgram?.discipline?.department?.name || 'Pick a program to auto-fill department'}
-                  </p>
-                  <p className="text-base-content/60">
-                    {selectedProgram?.discipline?.name || 'Discipline will match selected program'}
+                  <p className="text-xs">
+                    Teachers and class assignments are configured separately through course offerings. A single course can be taught to different batches by different teachers.
                   </p>
                 </div>
 

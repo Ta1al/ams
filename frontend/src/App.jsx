@@ -8,6 +8,7 @@ import CourseDetailPage from './pages/CourseDetailPage';
 import UsersPage from './pages/admin/UsersPage';
 import ProgramsPage from './pages/admin/ProgramsPage';
 import CoursesPage from './pages/admin/CoursesPage';
+import CourseOfferingsPage from './pages/admin/CourseOfferingsPage';
 import ClassesPage from './pages/admin/ClassesPage';
 // Teacher pages
 import TeacherClassesPage from './pages/teacher/ClassesPage';
@@ -63,10 +64,17 @@ function App() {
           />
 
           <Route
+<<<<<<< HEAD
             path="/admin/schedule"
             element={
               <ProtectedRoute allowedRoles={['admin']}>
                 <TeacherSchedulePage />
+=======
+            path="/admin/courses/:courseId/offerings"
+            element={
+              <ProtectedRoute allowedRoles={['admin']}>
+                <CourseOfferingsPage />
+>>>>>>> 75222a6ffe4edccc536f7f1ba7091d90d7e07061
               </ProtectedRoute>
             }
           />
