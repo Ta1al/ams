@@ -2,11 +2,18 @@ const mongoose = require('mongoose');
 
 const STATUS_VALUES = ['scheduled', 'active', 'completed', 'cancelled'];
 
+const RECURRENCE_FREQUENCIES = ['none', 'daily', 'weekly'];
+
 const classSessionSchema = new mongoose.Schema({
   course: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Course',
     required: true,
+  },
+  room: {
+    type: String,
+    trim: true,
+    default: '',
   },
   startTime: {
     type: Date,
@@ -15,6 +22,27 @@ const classSessionSchema = new mongoose.Schema({
   endTime: {
     type: Date,
     required: true,
+  },
+  recurrence: {
+    frequency: {
+      type: String,
+      enum: RECURRENCE_FREQUENCIES,
+      default: 'none',
+    },
+    interval: {
+      type: Number,
+      min: 1,
+      default: 1,
+    },
+    count: {
+      type: Number,
+      min: 1,
+      default: 1,
+    },
+    until: {
+      type: Date,
+      required: false,
+    },
   },
   status: {
     type: String,
