@@ -12,11 +12,10 @@ This document tracks consistency checks for the backend logic.
 The following relationships are defined:
 
 - **Attendance** references: User
-- **Class** references: Department, Division, Program
-- **Course** references: Department, Discipline, Program, User, User
+- **Class** references: Department, Discipline, Program
+- **Course** references: Department, Discipline, Program, Class, User, User
 - **Department** references: Faculty, User
 - **Discipline** references: Department
-- **Division** references: Department
 - **Program** references: Discipline, Department
 - **User** references: Program, Class, Department
 

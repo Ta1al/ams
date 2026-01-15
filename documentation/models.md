@@ -7,8 +7,8 @@ This document illustrates the data hierarchy and relationships within the Attend
 The academic structure is organized as follows:
 1.  **Faculty**: The highest organizational unit (e.g., Faculty of Computing).
 2.  **Department**: Belong to a Faculty (e.g., Department of CS).
-3.  **Division**: Specialized units within a Department (e.g., AI Division).
-4.  **Program**: Academic degrees offered by a Division (e.g., BS AI).
+3.  **Discipline**: Specialized academic units within a Department (e.g., Software Engineering).
+4.  **Program**: Academic degrees offered by a Discipline (e.g., BS Software Engineering).
 
 5.  **Users**:
     *   **Students** are enrolled in a **Program**.
@@ -24,14 +24,15 @@ Fields:
 - `name` (required)
 - `code` (optional)
 - `department` (required, ref `Department`)
-- `division` (required, ref `Division`)
+- `discipline` (required, ref `Discipline`)
 - `program` (required, ref `Program`)
+- `class` (required, ref `Class`) — batch the course is offered to
 - `teacher` (required, ref `User`)
 
 Consistency rules enforced on create/update (backend):
 
-- `division.department` must match the selected `department`.
-- `program.division` must match the selected `division`.
+- `discipline.department` must match the selected `department`.
+- `program.discipline` must match the selected `discipline`.
 - `teacher.role` must be `teacher`.
 - If the selected teacher has `department` set, it must match the selected `department`.
 
@@ -65,17 +66,18 @@ classDiagram
         +ObjectId headOfDepartment
     }
 
-    class Division {
-        +ObjectId _id
-        +String name
-        +ObjectId department
-    }
-
     class Program {
         +ObjectId _id
         +String name
         +String level
-        +ObjectId division
+        +ObjectId discipline
+        +ObjectId department
+    }
+
+    class Discipline {
+        +ObjectId _id
+        +String name
+        +ObjectId department
     }
 
     class Course {
@@ -83,19 +85,20 @@ classDiagram
         +String name
         +String code
         +ObjectId department
-        +ObjectId division
+        +ObjectId discipline
         +ObjectId program
+        +ObjectId class
         +ObjectId teacher
     }
 
     %% Hierarchy Relationships
     Faculty "1" --> "*" Department : contains
-    Department "1" --> "*" Division : contains
-    Division "1" --> "*" Program : offers
+    Department "1" --> "*" Discipline : contains
+    Discipline "1" --> "*" Program : offers
 
     %% Course Relationships
     Department "1" --> "*" Course : offers
-    Division "1" --> "*" Course : offers
+    Discipline "1" --> "*" Course : offers
     Program "1" --> "*" Course : offers
     User "1" --> "*" Course : teaches
 
@@ -112,11 +115,11 @@ classDiagram
 ```mermaid
 erDiagram
     FACULTY ||--|{ DEPARTMENT : contains
-    DEPARTMENT ||--|{ DIVISION : contains
-    DIVISION ||--|{ PROGRAM : offers
+    DEPARTMENT ||--|{ DISCIPLINE : contains
+    DISCIPLINE ||--|{ PROGRAM : offers
 
     DEPARTMENT ||--|{ COURSE : offers
-    DIVISION ||--|{ COURSE : offers
+    DISCIPLINE ||--|{ COURSE : offers
     PROGRAM ||--|{ COURSE : offers
     USER ||--|{ COURSE : teaches
     
@@ -137,7 +140,7 @@ erDiagram
         ObjectId headOfDepartment
     }
 
-    DIVISION {
+    DISCIPLINE {
         ObjectId _id
         String name
         ObjectId department
@@ -147,7 +150,8 @@ erDiagram
         ObjectId _id
         String name
         String level
-        ObjectId division
+        ObjectId discipline
+        ObjectId department
     }
 
     COURSE {
@@ -155,8 +159,9 @@ erDiagram
         String name
         String code
         ObjectId department
-        ObjectId division
+        ObjectId discipline
         ObjectId program
+        ObjectId class
         ObjectId teacher
     }
 

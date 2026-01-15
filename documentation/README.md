@@ -25,6 +25,7 @@ These files are manually created and maintained:
 - **[auth-and-rbac.md](auth-and-rbac.md)**: Detailed documentation of authentication using JWT and Role-Based Access Control (RBAC) implementation. Includes sequence diagrams and examples.
 
 - **[models.md](models.md)**: Entity relationship diagrams showing the hierarchical data structure from Faculty → Department → Division → Program, and user relationships.
+- **[models.md](models.md)**: Entity relationship diagrams showing the hierarchical data structure from Faculty → Department → Discipline → Program, and user relationships.
 
 ## How Automated Documentation Works
 

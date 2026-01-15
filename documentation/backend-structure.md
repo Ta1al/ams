@@ -55,7 +55,7 @@ backend/
 
 **References:**
 - Department
-- Division
+- Discipline
 - Program
 
 ### Course
@@ -69,12 +69,14 @@ backend/
 | department | ObjectId |
 | discipline | ObjectId |
 | program | ObjectId |
+| class | ObjectId |
 | teacher | ObjectId |
 
 **References:**
 - Department
 - Discipline
 - Program
+- Class
 - User
 - User
 
@@ -93,18 +95,6 @@ backend/
 - User
 
 ### Discipline
-
-**Fields:**
-
-| Field | Type |
-|-------|------|
-| name | String |
-| department | ObjectId |
-
-**References:**
-- Department
-
-### Division
 
 **Fields:**
 
@@ -172,9 +162,9 @@ The system follows this organizational hierarchy:
 ```
 Faculty
   └── Department
-        └── Division
-              └── Program
-                    └── Student (User)
+    └── Discipline
+      └── Program
+        └── Student (User)
 
 Department
   └── Teacher (User)
