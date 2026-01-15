@@ -1,11 +1,10 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   ArrowLeft,
   BookOpen,
   CalendarCheck,
-  CheckCircle2,
-  Clock,
+
   GraduationCap,
   MapPin,
   Users,
@@ -24,14 +23,6 @@ const fallbackCourse = {
   teacher: { name: 'Instructor TBD' },
 };
 
-const placeholderRoster = [];
-
-const placeholderTimeline = [
-  { id: 't-1', label: 'Mon, Jan 5', status: 'Completed', attendance: '28 / 30' },
-  { id: 't-2', label: 'Wed, Jan 7', status: 'Completed', attendance: '29 / 30' },
-  { id: 't-3', label: 'Fri, Jan 9', status: 'Scheduled', attendance: '—' },
-];
-
 const CourseDetailPage = () => {
   const { courseId } = useParams();
   const navigate = useNavigate();
@@ -45,6 +36,7 @@ const CourseDetailPage = () => {
   const [enrollmentSaving, setEnrollmentSaving] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [attendanceRecords, setAttendanceRecords] = useState([]);
 
   const canManageEnrollment = role === 'admin' || role === 'teacher';
 
@@ -104,14 +96,53 @@ const CourseDetailPage = () => {
     fetchAllStudents();
   }, [canManageEnrollment, user?.token]);
 
+  const fetchAttendance = useCallback(async () => {
+    if (!user?.token || !courseId) return;
+
+    try {
+      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5001'}/api/attendance?course=${courseId}`, {
+        headers: { Authorization: `Bearer ${user.token}` },
+      });
+      const data = await response.json();
+      if (response.ok && Array.isArray(data)) {
+        setAttendanceRecords(data);
+      }
+    } catch (err) {
+      console.error('Failed to fetch attendance:', err);
+    }
+  }, [courseId, user?.token]);
+
+  useEffect(() => {
+    fetchAttendance();
+  }, [fetchAttendance]);
+
   const stats = useMemo(() => {
+    const totalAttendanceRecords = attendanceRecords.length;
+    const totalStudents = enrolledStudents.length;
+    
+    let presentCount = 0;
+    attendanceRecords.forEach((record) => {
+      if (record.studentRecords && Array.isArray(record.studentRecords)) {
+        record.studentRecords.forEach((sr) => {
+          if (sr.status === 'present') presentCount++;
+        });
+      }
+    });
+
+    const totalPossibleAttendances = totalAttendanceRecords * totalStudents;
+    const attendanceRate = totalPossibleAttendances > 0 
+      ? Math.round((presentCount / totalPossibleAttendances) * 100) 
+      : 0;
+
     return {
-      attendanceRate: 86,
-      totalSessions: 24,
-      totalStudents: canManageEnrollment ? enrolledStudents.length : placeholderRoster.length,
-      lastSession: 'Updated 2 days ago',
+      attendanceRate,
+      totalSessions: totalAttendanceRecords,
+      totalStudents,
+      lastSession: totalAttendanceRecords > 0 
+        ? new Date(attendanceRecords[totalAttendanceRecords - 1]?.date).toLocaleDateString() 
+        : 'No sessions yet',
     };
-  }, [canManageEnrollment, enrolledStudents.length]);
+  }, [attendanceRecords, enrolledStudents.length]);
 
   const courseProgramId = useMemo(() => {
     const program = course?.program;
@@ -286,38 +317,6 @@ const CourseDetailPage = () => {
               </div>
             </div>
           </div>
-
-          <div className="card bg-base-100 shadow-xl">
-            <div className="card-body">
-              <h2 className="card-title flex items-center gap-2">
-                <Clock className="w-5 h-5" />
-                Next Steps
-              </h2>
-              <div className="mt-4 space-y-3">
-                <div className="flex items-start gap-3">
-                  <CheckCircle2 className="w-5 h-5 text-success mt-1" />
-                  <div>
-                    <p className="font-semibold">Connect attendance API</p>
-                    <p className="text-sm text-base-content/60">Hook this page to /api/attendance to show live data.</p>
-                  </div>
-                </div>
-                <div className="flex items-start gap-3">
-                  <CheckCircle2 className="w-5 h-5 text-success mt-1" />
-                  <div>
-                    <p className="font-semibold">Sync roster</p>
-                    <p className="text-sm text-base-content/60">Pull enrolled students by program/course assignment.</p>
-                  </div>
-                </div>
-                <div className="flex items-start gap-3">
-                  <CheckCircle2 className="w-5 h-5 text-success mt-1" />
-                  <div>
-                    <p className="font-semibold">Session schedule</p>
-                    <p className="text-sm text-base-content/60">Surface upcoming classes with room/time once available.</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
@@ -325,19 +324,27 @@ const CourseDetailPage = () => {
             <div className="card-body">
               <h2 className="card-title flex items-center gap-2">
                 <CalendarCheck className="w-5 h-5" />
-                Attendance Timeline
+                Recent Attendance Sessions
               </h2>
               <div className="divider my-2"></div>
               <div className="space-y-3">
-                {placeholderTimeline.map((entry) => (
-                  <div key={entry.id} className="flex items-center justify-between p-4 rounded-xl bg-base-200">
-                    <div>
-                      <p className="font-semibold">{entry.label}</p>
-                      <p className="text-sm text-base-content/60">Status: {entry.status}</p>
-                    </div>
-                    <span className="badge badge-outline">{entry.attendance}</span>
-                  </div>
-                ))}
+                {attendanceRecords.length === 0 ? (
+                  <p className="text-sm text-base-content/60">No attendance records yet.</p>
+                ) : (
+                  attendanceRecords.slice(-5).reverse().map((record) => {
+                    const presentCount = record.studentRecords?.filter((sr) => sr.status === 'present').length || 0;
+                    const totalCount = record.studentRecords?.length || 0;
+                    return (
+                      <div key={record._id} className="flex items-center justify-between p-4 rounded-xl bg-base-200">
+                        <div>
+                          <p className="font-semibold">{new Date(record.date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}</p>
+                          <p className="text-sm text-base-content/60">{record.session || 'Session'}</p>
+                        </div>
+                        <span className="badge badge-outline">{presentCount} / {totalCount}</span>
+                      </div>
+                    );
+                  })
+                )}
               </div>
             </div>
           </div>
@@ -432,32 +439,6 @@ const CourseDetailPage = () => {
                   )}
                 </div>
               )}
-            </div>
-          </div>
-        </div>
-
-        <div className="card bg-base-100 shadow-xl">
-          <div className="card-body">
-            <h2 className="card-title flex items-center gap-2">
-              <AlertTriangle className="w-5 h-5" />
-              What is pending?
-            </h2>
-            <p className="text-sm text-base-content/70">
-              This page is wired for structure. Hook attendance, roster, and scheduling APIs to replace placeholders.
-            </p>
-            <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-3">
-              <div className="p-4 rounded-xl bg-base-200">
-                <p className="font-semibold">Attendance feed</p>
-                <p className="text-sm text-base-content/60">Consume upcoming Day 3 attendance endpoints.</p>
-              </div>
-              <div className="p-4 rounded-xl bg-base-200">
-                <p className="font-semibold">Roster source</p>
-                <p className="text-sm text-base-content/60">Use program/course assignments once available.</p>
-              </div>
-              <div className="p-4 rounded-xl bg-base-200">
-                <p className="font-semibold">Actions</p>
-                <p className="text-sm text-base-content/60">Wire Mark Attendance CTA to selected course.</p>
-              </div>
             </div>
           </div>
         </div>
