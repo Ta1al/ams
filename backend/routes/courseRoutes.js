@@ -9,6 +9,7 @@ const {
   deleteCourse,
   enrollStudents,
   bulkEnrollByProgram,
+  bulkEnrollByClass,
   unenrollStudent,
   getEnrolledStudents,
   getStudentCourses,
@@ -29,6 +30,7 @@ router.route('/:id')
 
 router.post('/:id/enroll', protect, authorize('teacher', 'admin'), enrollStudents);
 router.post('/:id/enroll-bulk', protect, authorize('teacher', 'admin'), bulkEnrollByProgram);
+router.post('/:id/enroll-class', protect, authorize('teacher', 'admin'), bulkEnrollByClass);
 router.delete('/:id/unenroll/:studentId', protect, authorize('teacher', 'admin'), unenrollStudent);
 router.get('/:id/students', protect, authorize('teacher', 'admin'), getEnrolledStudents);
 
