@@ -1,7 +1,7 @@
 # Backend Structure
 
 > **Note**: This documentation is automatically generated from the backend code.
-> Last updated: 2026-01-15T16:21:43.826Z
+> Last updated: 2026-01-15T16:32:47.439Z
 
 ## Architecture Overview
 
@@ -57,6 +57,26 @@ backend/
 - Department
 - Discipline
 - Program
+
+### ClassSession
+
+**Fields:**
+
+| Field | Type |
+|-------|------|
+| course | ObjectId |
+| startTime | Date |
+| endTime | Date |
+| status | String |
+| createdBy | ObjectId |
+| updatedBy | ObjectId |
+| rescheduleReason | String |
+| cancelledReason | String |
+
+**References:**
+- Course
+- User
+- User
 
 ### Course
 
@@ -184,8 +204,8 @@ Department
 
 ## Component Statistics
 
-- **Models**: 11
-- **Controllers**: 13
-- **Routes**: 13
+- **Models**: 12
+- **Controllers**: 14
+- **Routes**: 14
 - **Middleware**: 1
 

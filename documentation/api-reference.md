@@ -1,7 +1,7 @@
 # API Reference
 
 > **Note**: This documentation is automatically generated from the backend code.
-> Last updated: 2026-01-15T16:21:43.821Z
+> Last updated: 2026-01-15T16:32:47.434Z
 
 ## Overview
 
@@ -73,6 +73,15 @@ This document provides a comprehensive reference for all API endpoints in the AM
 - `updateClass`
 - `deleteClass`
 - `getClassStudents`
+
+### classSessionController
+
+**Handler Functions:**
+- `ensureCourseAccess`
+- `getSessions`
+- `createSession`
+- `rescheduleSession`
+- `updateSessionStatus`
 
 ### courseController
 
@@ -271,6 +280,18 @@ This document provides a comprehensive reference for all API endpoints in the AM
 - `GET /:id/students`
 - `ROUTE /`
 - `ROUTE /:id`
+
+**Middleware:**
+- middleware/authMiddleware
+
+### classSessionRoutes
+
+**Endpoints:**
+
+- `GET /`
+- `POST /`
+- `PUT /:id/reschedule`
+- `PUT /:id/status`
 
 **Middleware:**
 - middleware/authMiddleware
