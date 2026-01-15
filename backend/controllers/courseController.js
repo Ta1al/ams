@@ -25,6 +25,7 @@ const getCourses = async (req, res) => {
     if (req.query.department) filter.department = req.query.department;
     if (req.query.discipline) filter.discipline = req.query.discipline;
     if (req.query.program) filter.program = req.query.program;
+    if (req.query.class) filter.class = req.query.class;
     if (req.query.teacher) filter.teacher = req.query.teacher;
 
     if (req.user.role === 'teacher') {
@@ -32,12 +33,10 @@ const getCourses = async (req, res) => {
     }
 
     if (req.user.role === 'student') {
-      // Students can only see courses in their program
-      if (req.user.program) {
-        filter.program = req.user.program;
-      } else {
-        return res.status(200).json([]);
-      }
+      // Students can only see courses in their program/class (section offering)
+      if (!req.user.program || !req.user.class) return res.status(200).json([]);
+      filter.program = req.user.program;
+      filter.class = req.user.class;
     }
 
     const courses = await Course.find(filter)
