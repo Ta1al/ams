@@ -1,7 +1,7 @@
 # Backend Structure
 
 > **Note**: This documentation is automatically generated from the backend code.
-> Last updated: 2026-01-15T16:53:16.901Z
+> Last updated: 2026-01-15T17:35:44.482Z
 
 ## Architecture Overview
 
