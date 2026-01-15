@@ -1,5 +1,6 @@
 const Attendance = require('../models/Attendance');
 const Course = require('../models/Course');
+const { ensureAttendanceAllowedNow } = require('../utils/attendanceWindow');
 
 const STATUS_ENUM = ['present', 'absent', 'late'];
 
@@ -40,7 +41,22 @@ const markAttendance = async (req, res) => {
       return res.status(access.status).json({ message: access.message });
     }
 
-    const existing = await Attendance.findOne({ course, date });
+    // Only allow teachers to mark attendance during scheduled class time
+    const attendanceDate = new Date(date);
+    if (Number.isNaN(attendanceDate.getTime())) {
+      return res.status(400).json({ message: 'Invalid date' });
+    }
+
+    const windowCheck = await ensureAttendanceAllowedNow({
+      courseId: course,
+      user: req.user,
+      date: attendanceDate,
+    });
+    if (!windowCheck.ok) {
+      return res.status(windowCheck.status).json({ message: windowCheck.message });
+    }
+
+    const existing = await Attendance.findOne({ course, date: attendanceDate });
     if (existing) {
       return res.status(400).json({ message: 'Attendance already exists for this course and date' });
     }
@@ -52,11 +68,12 @@ const markAttendance = async (req, res) => {
 
     const attendance = await Attendance.create({
       course,
-      date,
+      date: attendanceDate,
       session,
       studentRecords: records,
       markedBy: req.user._id,
       notes,
+      classSession: windowCheck.sessionId,
     });
 
     return res.status(201).json(attendance);
