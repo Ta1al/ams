@@ -10,7 +10,7 @@ const classSchema = new mongoose.Schema({
   },
   discipline: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'Division',
+    ref: 'Discipline',
     required: true,
   },
   program: {
