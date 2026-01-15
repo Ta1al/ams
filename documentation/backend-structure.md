@@ -1,7 +1,7 @@
 # Backend Structure
 
 > **Note**: This documentation is automatically generated from the backend code.
-> Last updated: 2026-01-14T17:19:39.731Z
+> Last updated: 2026-01-15T15:58:24.794Z
 
 ## Architecture Overview
 
@@ -106,6 +106,18 @@ backend/
 **References:**
 - Department
 
+### Division
+
+**Fields:**
+
+| Field | Type |
+|-------|------|
+| name | String |
+| department | ObjectId |
+
+**References:**
+- Department
+
 ### Faculty
 
 **Fields:**
@@ -162,9 +174,9 @@ The system follows this organizational hierarchy:
 ```
 Faculty
   └── Department
-    └── Discipline
-      └── Program
-        └── Student (User)
+        └── Division
+              └── Program
+                    └── Student (User)
 
 Department
   └── Teacher (User)

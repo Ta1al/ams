@@ -1,7 +1,7 @@
 # API Reference
 
 > **Note**: This documentation is automatically generated from the backend code.
-> Last updated: 2026-01-14T17:19:39.726Z
+> Last updated: 2026-01-15T15:58:24.789Z
 
 ## Overview
 
@@ -86,6 +86,8 @@ This document provides a comprehensive reference for all API endpoints in the AM
 
 #### `DELETE /api/courses/:id`
 
+#### `POST /api/courses/:id/enroll-class`
+
 **Handler Functions:**
 - `getCourses`
 - `getCourseById`
@@ -94,6 +96,7 @@ This document provides a comprehensive reference for all API endpoints in the AM
 - `deleteCourse`
 - `enrollStudents`
 - `bulkEnrollByProgram`
+- `bulkEnrollByClass`
 - `unenrollStudent`
 - `getEnrolledStudents`
 - `getStudentCourses`
@@ -280,6 +283,7 @@ This document provides a comprehensive reference for all API endpoints in the AM
 - `GET /:id/students`
 - `POST /:id/enroll`
 - `POST /:id/enroll-bulk`
+- `POST /:id/enroll-class`
 - `DELETE /:id/unenroll/:studentId`
 - `ROUTE /`
 - `ROUTE /:id`

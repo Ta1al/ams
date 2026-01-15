@@ -1,7 +1,7 @@
 # Logic Consistency Report
 
 > **Note**: This report is automatically generated.
-> Last updated: 2026-01-14T17:19:39.731Z
+> Last updated: 2026-01-15T15:58:24.794Z
 
 ## Overview
 
@@ -16,6 +16,7 @@ The following relationships are defined:
 - **Course** references: Department, Discipline, Program, Class, User, User
 - **Department** references: Faculty, User
 - **Discipline** references: Department
+- **Division** references: Department
 - **Program** references: Discipline, Department
 - **User** references: Program, Class, Department
 
@@ -27,7 +28,7 @@ Each controller should have corresponding routes:
 - **attendanceController**: 9 functions, 0 documented routes
 - **authController**: 1 functions, 1 documented routes
 - **classController**: 6 functions, 6 documented routes
-- **courseController**: 10 functions, 5 documented routes
+- **courseController**: 11 functions, 6 documented routes
 - **dashboardController**: 1 functions, 1 documented routes
 - **departmentController**: 3 functions, 3 documented routes
 - **disciplineController**: 3 functions, 3 documented routes
