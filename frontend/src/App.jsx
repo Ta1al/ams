@@ -15,6 +15,7 @@ import TeacherStudentsPage from './pages/teacher/StudentsPage';
 import TeacherAttendancePage from './pages/teacher/AttendancePage';
 import TeacherAssignmentsPage from './pages/teacher/AssignmentsPage';
 import AssignmentGradingPage from './pages/teacher/AssignmentGradingPage';
+import TeacherSchedulePage from './pages/teacher/SchedulePage';
 // Student pages
 import StudentAttendancePage from './pages/student/MyAttendancePage';
 import MyAssignmentsPage from './pages/student/MyAssignmentsPage';
@@ -62,6 +63,15 @@ function App() {
           />
 
           <Route
+            path="/admin/schedule"
+            element={
+              <ProtectedRoute allowedRoles={['admin']}>
+                <TeacherSchedulePage />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
             path="/admin/classes"
             element={
               <ProtectedRoute allowedRoles={['admin']}>
@@ -92,6 +102,14 @@ function App() {
             element={
               <ProtectedRoute allowedRoles={['teacher', 'admin']}>
                 <TeacherAttendancePage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/teacher/schedule"
+            element={
+              <ProtectedRoute allowedRoles={['teacher', 'admin']}>
+                <TeacherSchedulePage />
               </ProtectedRoute>
             }
           />
