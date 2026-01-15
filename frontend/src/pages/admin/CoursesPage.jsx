@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
-import { Plus, BookOpen, GraduationCap, Eye, Trash2 } from 'lucide-react';
+import { Plus, BookOpen, GraduationCap, Eye, Trash2, Edit } from 'lucide-react';
 import DashboardLayout from '../../components/DashboardLayout';
 
 const CoursesPage = () => {
@@ -15,6 +15,7 @@ const CoursesPage = () => {
   const [saving, setSaving] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [error, setError] = useState('');
+  const [editingCourseId, setEditingCourseId] = useState(null);
   const [formData, setFormData] = useState({
     name: '',
     code: '',
@@ -98,7 +99,21 @@ const CoursesPage = () => {
   }, [fetchClasses]);
 
   const openAddModal = () => {
+    setEditingCourseId(null);
     setFormData({ name: '', code: '', program: '', class: '', teacher: '' });
+    setError('');
+    setIsModalOpen(true);
+  };
+
+  const openEditModal = (course) => {
+    setEditingCourseId(course._id);
+    setFormData({
+      name: course.name,
+      code: course.code || '',
+      program: course.program?._id || '',
+      class: course.class?._id || '',
+      teacher: course.teacher?._id || '',
+    });
     setError('');
     setIsModalOpen(true);
   };
@@ -127,8 +142,13 @@ const CoursesPage = () => {
         teacher: formData.teacher,
       };
 
-      const response = await fetch(`${apiUrl}/api/courses`, {
-        method: 'POST',
+      const url = editingCourseId 
+        ? `${apiUrl}/api/courses/${editingCourseId}` 
+        : `${apiUrl}/api/courses`;
+      const method = editingCourseId ? 'PUT' : 'POST';
+
+      const response = await fetch(url, {
+        method,
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${user?.token}`,
@@ -137,7 +157,7 @@ const CoursesPage = () => {
       });
 
       const data = await response.json();
-      if (!response.ok) throw new Error(data.message || 'Failed to create course');
+      if (!response.ok) throw new Error(data.message || `Failed to ${editingCourseId ? 'update' : 'create'} course`);
 
       setIsModalOpen(false);
       fetchCourses();
@@ -235,6 +255,13 @@ const CoursesPage = () => {
                               <Eye className="w-4 h-4" />
                             </button>
                             <button
+                              className="btn btn-ghost btn-sm"
+                              onClick={() => openEditModal(c)}
+                              title="Edit course"
+                            >
+                              <Edit className="w-4 h-4" />
+                            </button>
+                            <button
                               className="btn btn-ghost btn-sm text-error hover:bg-error hover:text-error-content"
                               onClick={() => handleDelete(c._id, c.name)}
                               title="Delete course"
@@ -255,7 +282,7 @@ const CoursesPage = () => {
         {isModalOpen && (
           <dialog className="modal modal-open">
             <div className="modal-box">
-              <h3 className="font-bold text-lg mb-4">Add Course</h3>
+              <h3 className="font-bold text-lg mb-4">{editingCourseId ? 'Edit Course' : 'Add Course'}</h3>
               {error && (
                 <div className="alert alert-error mb-3">
                   <span>{error}</span>
@@ -349,7 +376,7 @@ const CoursesPage = () => {
                     Cancel
                   </button>
                   <button type="submit" className={`btn btn-primary ${saving ? 'loading' : ''}`} disabled={saving}>
-                    {saving ? 'Saving...' : 'Create Course'}
+                    {saving ? 'Saving...' : (editingCourseId ? 'Update Course' : 'Create Course')}
                   </button>
                 </div>
               </form>
