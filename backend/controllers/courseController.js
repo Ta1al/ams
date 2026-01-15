@@ -1,6 +1,7 @@
 const Course = require('../models/Course');
 const { validateCourseHierarchy } = require('../utils/validateCourseHierarchy');
 const User = require('../models/User');
+const ClassModel = require('../models/Class');
 
 const isValidObjectId = (value) => {
   return typeof value === 'string' && value.match(/^[0-9a-fA-F]{24}$/);
@@ -22,7 +23,7 @@ const getCourses = async (req, res) => {
     const filter = {};
 
     if (req.query.department) filter.department = req.query.department;
-    if (req.query.discipline || req.query.division) filter.discipline = req.query.discipline || req.query.division;
+    if (req.query.discipline) filter.discipline = req.query.discipline;
     if (req.query.program) filter.program = req.query.program;
     if (req.query.teacher) filter.teacher = req.query.teacher;
 
@@ -102,13 +103,21 @@ const getCourseById = async (req, res) => {
 // @access  Private/Admin
 const createCourse = async (req, res) => {
   try {
-    const { name, code, department, program, teacher } = req.body;
-    const discipline = req.body.discipline || req.body.division;
+    const { name, code, department, program, teacher, class: classId } = req.body;
+    const discipline = req.body.discipline;
 
-    if (!name || !department || !discipline || !program || !teacher) {
+    if (!name || !department || !discipline || !program || !teacher || !classId) {
       return res.status(400).json({
-        message: 'name, department, discipline, program, teacher are required',
+        message: 'name, department, discipline, program, class, teacher are required',
       });
+    }
+
+    const classDoc = await ClassModel.findById(classId).select('program');
+    if (!classDoc) {
+      return res.status(400).json({ message: 'Class not found' });
+    }
+    if (String(classDoc.program) !== String(program)) {
+      return res.status(400).json({ message: 'Class does not belong to the selected program' });
     }
 
     const validation = await validateCourseHierarchy({ department, discipline, program, teacher });
@@ -122,6 +131,7 @@ const createCourse = async (req, res) => {
       department,
       discipline,
       program,
+      class: classId,
       teacher,
     });
 
@@ -152,18 +162,24 @@ const updateCourse = async (req, res) => {
       return res.status(404).json({ message: 'Course not found' });
     }
 
-    const allowedFields = ['name', 'code', 'department', 'discipline', 'program', 'teacher', 'division'];
+    const allowedFields = ['name', 'code', 'department', 'discipline', 'program', 'teacher', 'class'];
     for (const key of Object.keys(req.body)) {
       if (allowedFields.includes(key)) {
-        if (key === 'division' && !Object.prototype.hasOwnProperty.call(req.body, 'discipline')) {
-          course.discipline = req.body.division;
-        } else if (key !== 'division') {
-          course[key] = req.body[key];
-        }
+        course[key] = req.body[key];
       }
     }
 
-    const needsValidation = ['department', 'discipline', 'division', 'program', 'teacher'].some(
+    if (Object.prototype.hasOwnProperty.call(req.body, 'class')) {
+      const classDoc = await ClassModel.findById(course.class).select('program');
+      if (!classDoc) {
+        return res.status(400).json({ message: 'Class not found' });
+      }
+      if (String(classDoc.program) !== String(course.program)) {
+        return res.status(400).json({ message: 'Class does not belong to the selected program' });
+      }
+    }
+
+    const needsValidation = ['department', 'discipline', 'program', 'teacher'].some(
       (key) => Object.prototype.hasOwnProperty.call(req.body, key)
     );
     if (needsValidation) {
@@ -220,6 +236,16 @@ const ensureCourseAccess = (course, user) => {
     return { ok: true };
   }
   return { ok: false, status: 403, message: 'Not authorized for this course' };
+};
+
+const ensureClassAccess = (classDoc, user) => {
+  if (!classDoc) return { ok: false, status: 404, message: 'Class not found' };
+  if (user.role === 'admin') return { ok: true };
+  if (user.role === 'teacher') {
+    if (!user.department) return { ok: true };
+    if (String(user.department) === String(classDoc.department)) return { ok: true };
+  }
+  return { ok: false, status: 403, message: 'Not authorized for this class' };
 };
 
 const enrollStudents = async (req, res) => {
@@ -307,6 +333,62 @@ const bulkEnrollByProgram = async (req, res) => {
   }
 };
 
+// @desc    Bulk enroll a whole class into a course
+// @route   POST /api/courses/:id/enroll-class
+// @access  Private (Teacher/Admin)
+const bulkEnrollByClass = async (req, res) => {
+  try {
+    const { id } = req.params; // course id
+    const { classId } = req.body;
+
+    const course = await Course.findById(id);
+    const access = ensureCourseAccess(course, req.user);
+    if (!access.ok) return res.status(access.status).json({ message: access.message });
+
+    const targetClassId = classId || course.class;
+    if (!targetClassId) {
+      return res.status(400).json({ message: 'classId is required (course has no class set)' });
+    }
+
+    const classDoc = await ClassModel.findById(targetClassId).select('program department');
+    const classAccess = ensureClassAccess(classDoc, req.user);
+    if (!classAccess.ok) return res.status(classAccess.status).json({ message: classAccess.message });
+
+    if (String(classDoc.program) !== String(course.program)) {
+      return res.status(400).json({ message: 'Class does not match course program' });
+    }
+
+    const students = await User.find({ role: 'student', class: targetClassId }).select('_id program');
+    if (!students.length) {
+      return res.status(400).json({ message: 'No students found for the specified class' });
+    }
+
+    const courseProgramId = toIdString(course.program);
+    const invalid = students.filter((s) => toIdString(s.program) !== courseProgramId);
+    if (invalid.length) {
+      return res.status(400).json({
+        message: 'One or more students are not in the course program',
+        courseProgramId,
+        invalidStudentIds: invalid.map((s) => String(s._id)),
+      });
+    }
+
+    const result = await Course.findByIdAndUpdate(
+      id,
+      { $addToSet: { enrolledStudents: { $each: students.map((s) => s._id) } } },
+      { new: true }
+    ).populate('enrolledStudents', 'name username role program');
+
+    return res.status(200).json({
+      message: `${students.length} students enrolled successfully`,
+      course: result,
+      enrolledCount: students.length,
+    });
+  } catch (error) {
+    return res.status(500).json({ message: error.message });
+  }
+};
+
 const unenrollStudent = async (req, res) => {
   try {
     const { id, studentId } = req.params;
@@ -358,6 +440,15 @@ const getStudentCourses = async (req, res) => {
         select: 'level discipline department',
         populate: { path: 'discipline', select: 'name department' },
       })
+      .populate({
+        path: 'class',
+        select: 'section session program discipline department',
+        populate: {
+          path: 'program',
+          select: 'program discipline',
+          populate: { path: 'discipline', select: 'name department' },
+        },
+      })
       .populate('teacher', 'name username role')
       .populate('enrolledStudents', 'name username role program');
 
@@ -375,6 +466,7 @@ module.exports = {
   deleteCourse,
   enrollStudents,
   bulkEnrollByProgram,
+  bulkEnrollByClass,
   unenrollStudent,
   getEnrolledStudents,
   getStudentCourses,

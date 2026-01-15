@@ -21,7 +21,7 @@ const getClasses = async (req, res) => {
     const filter = {};
 
     if (req.query.department) filter.department = req.query.department;
-    if (req.query.discipline || req.query.division) filter.discipline = req.query.discipline || req.query.division;
+    if (req.query.discipline) filter.discipline = req.query.discipline;
     if (req.query.program) filter.program = req.query.program;
     if (req.query.section) filter.section = req.query.section;
 
@@ -96,7 +96,7 @@ const getClassById = async (req, res) => {
 const createClass = async (req, res) => {
   try {
     const { department, program, session, section } = req.body;
-    const discipline = req.body.discipline || req.body.division;
+    const discipline = req.body.discipline;
 
     const startYear = session?.startYear;
     const endYear = session?.endYear;
@@ -145,14 +145,10 @@ const updateClass = async (req, res) => {
       return res.status(404).json({ message: 'Class not found' });
     }
 
-    const allowedFields = ['department', 'discipline', 'program', 'section', 'division'];
+    const allowedFields = ['department', 'discipline', 'program', 'section'];
     for (const key of Object.keys(req.body)) {
       if (allowedFields.includes(key)) {
-        if (key === 'division' && !Object.prototype.hasOwnProperty.call(req.body, 'discipline')) {
-          classDoc.discipline = req.body.division;
-        } else if (key !== 'division') {
-          classDoc[key] = req.body[key];
-        }
+        classDoc[key] = req.body[key];
       }
     }
 
@@ -164,7 +160,7 @@ const updateClass = async (req, res) => {
       if (endYear !== undefined) classDoc.session.endYear = endYear;
     }
 
-    const needsHierarchyValidation = ['department', 'discipline', 'division', 'program'].some(
+    const needsHierarchyValidation = ['department', 'discipline', 'program'].some(
       (key) => Object.prototype.hasOwnProperty.call(req.body, key)
     );
     if (needsHierarchyValidation) {
