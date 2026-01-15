@@ -1,7 +1,7 @@
 # Logic Consistency Report
 
 > **Note**: This report is automatically generated.
-> Last updated: 2026-01-15T17:19:16.857Z
+> Last updated: 2026-01-15T16:53:16.901Z
 
 ## Overview
 
@@ -29,7 +29,7 @@ Each controller should have corresponding routes:
 - **attendanceController**: 9 functions, 0 documented routes
 - **authController**: 1 functions, 1 documented routes
 - **classController**: 6 functions, 6 documented routes
-- **classSessionController**: 5 functions, 0 documented routes
+- **classSessionController**: 6 functions, 0 documented routes
 - **courseController**: 11 functions, 6 documented routes
 - **dashboardController**: 1 functions, 1 documented routes
 - **departmentController**: 3 functions, 3 documented routes
