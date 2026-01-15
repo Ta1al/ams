@@ -44,7 +44,7 @@ const courseSchema = new mongoose.Schema({
 });
 
 courseSchema.index(
-  { class: 1, code: 1 },
+  { class: 1, code: 1, teacher: 1 },
   {
     unique: true,
     partialFilterExpression: { code: { $type: 'string' } },
