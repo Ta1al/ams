@@ -176,6 +176,7 @@ const seedDatabase = async () => {
     const endTime = new Date(now.getTime() + 55 * 60 * 1000);
     await ClassSession.create({
       course: courseRegular._id,
+      room: 'Room A-101',
       startTime,
       endTime,
       status: 'active',
