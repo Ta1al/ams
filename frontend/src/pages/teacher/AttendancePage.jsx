@@ -1,10 +1,12 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useAuth } from '../../hooks/useAuth';
-import { CalendarCheck, Users, Check, X, Clock, AlertCircle } from 'lucide-react';
+import { CalendarCheck, Users, Check, X, Clock, AlertCircle, Calendar } from 'lucide-react';
 import DashboardLayout from '../../components/DashboardLayout';
+import { useNavigate } from 'react-router-dom';
 
 const AttendancePage = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5001';
 
   const [courses, setCourses] = useState([]);
@@ -14,6 +16,9 @@ const AttendancePage = () => {
   const [attendance, setAttendance] = useState({});
   const [existingAttendanceId, setExistingAttendanceId] = useState('');
   const [pastRecords, setPastRecords] = useState([]);
+
+  const [sessions, setSessions] = useState([]);
+  const [loadingSessions, setLoadingSessions] = useState(false);
 
   const [loadingCourses, setLoadingCourses] = useState(false);
   const [loadingStudents, setLoadingStudents] = useState(false);
@@ -113,6 +118,43 @@ const AttendancePage = () => {
     }
   }, [apiUrl, user?.token, selectedDate]);
 
+  const fetchSessions = useCallback(async (courseId) => {
+    if (!courseId) return;
+    try {
+      setLoadingSessions(true);
+      const response = await fetch(`${apiUrl}/api/sessions?course=${courseId}`, {
+        headers: {
+          Authorization: `Bearer ${user?.token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data?.message || 'Failed to load sessions');
+      setSessions(Array.isArray(data) ? data : []);
+    } catch (err) {
+      // Keep attendance page usable even if sessions fail
+      console.error('Failed to fetch sessions:', err);
+      setSessions([]);
+    } finally {
+      setLoadingSessions(false);
+    }
+  }, [apiUrl, user?.token]);
+
+  const activeSession = useMemo(() => {
+    const now = Date.now();
+    return (sessions || []).find((s) => {
+      if (!s?.startTime || !s?.endTime) return false;
+      const start = new Date(s.startTime).getTime();
+      const end = new Date(s.endTime).getTime();
+      if (Number.isNaN(start) || Number.isNaN(end)) return false;
+      if (!['scheduled', 'active'].includes(s.status)) return false;
+      // Match backend grace window defaults (10 min early, 15 min late)
+      const early = 10 * 60 * 1000;
+      const late = 15 * 60 * 1000;
+      return start - early <= now && now <= end + late;
+    }) || null;
+  }, [sessions]);
+
   useEffect(() => {
     fetchCourses();
   }, [fetchCourses]);
@@ -127,7 +169,8 @@ const AttendancePage = () => {
     }
     fetchStudents(selectedCourseId);
     fetchAttendance(selectedCourseId);
-  }, [selectedCourseId, fetchStudents, fetchAttendance]);
+    fetchSessions(selectedCourseId);
+  }, [selectedCourseId, fetchStudents, fetchAttendance, fetchSessions]);
 
   useEffect(() => {
     if (!selectedCourseId) return;
@@ -237,12 +280,44 @@ const AttendancePage = () => {
             <button
               onClick={saveAttendance}
               className={`btn btn-primary ${saving ? 'loading' : ''}`}
-              disabled={saving || !selectedCourseId || students.length === 0}
+              disabled={
+                saving
+                || !selectedCourseId
+                || students.length === 0
+                || (!existingAttendanceId && !activeSession)
+              }
             >
               {saving ? 'Saving...' : existingAttendanceId ? 'Update Attendance' : 'Save Attendance'}
             </button>
           </div>
         </div>
+
+        {selectedCourseId && !existingAttendanceId ? (
+          <div className={`alert ${activeSession ? 'alert-success' : 'alert-warning'} flex items-center justify-between gap-3`}>
+            <div className="flex items-center gap-2">
+              <Calendar className="w-5 h-5" />
+              <div>
+                <div className="font-semibold">
+                  {activeSession ? 'Attendance window is open' : 'Attendance is locked right now'}
+                </div>
+                <div className="text-sm opacity-80">
+                  {loadingSessions
+                    ? 'Checking schedule…'
+                    : activeSession
+                      ? `Session: ${new Date(activeSession.startTime).toLocaleString()} → ${new Date(activeSession.endTime).toLocaleString()}${activeSession.room ? ` · Room ${activeSession.room}` : ''}`
+                      : 'Create or start a class session to mark attendance.'}
+                </div>
+              </div>
+            </div>
+            <button
+              type="button"
+              className="btn btn-outline btn-sm"
+              onClick={() => navigate('/teacher/schedule')}
+            >
+              Open Schedule
+            </button>
+          </div>
+        ) : null}
 
         {error ? (
           <div className="alert alert-error flex gap-2">
