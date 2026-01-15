@@ -6,6 +6,7 @@ import {
   BookOpen,
   GraduationCap,
   CalendarCheck,
+  Calendar,
   ClipboardList,
   Settings,
   LogOut,
@@ -35,6 +36,7 @@ const DashboardLayout = ({ children }) => {
         { path: '/admin/users', label: 'Users', icon: Users },
         { path: '/admin/classes', label: 'Classes', icon: ClipboardList },
         { path: '/admin/courses', label: 'Courses', icon: BookOpen },
+        { path: '/admin/schedule', label: 'Schedule', icon: Calendar },
         { path: '/admin/programs', label: 'Programs', icon: GraduationCap },
         { path: '/admin/settings', label: 'Settings', icon: Settings },
       ];
@@ -44,6 +46,7 @@ const DashboardLayout = ({ children }) => {
       return [
         ...baseItems,
         { path: '/teacher/classes', label: 'My Classes', icon: ClipboardList },
+        { path: '/teacher/schedule', label: 'Schedule', icon: Calendar },
         { path: '/teacher/attendance', label: 'Mark Attendance', icon: CalendarCheck },
         { path: '/teacher/students', label: 'Students', icon: Users },
         { path: '/teacher/assignments', label: 'Assignments', icon: FileText },
