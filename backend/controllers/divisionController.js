@@ -1,11 +1,17 @@
 const Division = require('../models/Division');
 const Department = require('../models/Department');
 
+const warnDeprecated = () => {
+  if (process.env.SUPPRESS_DEPRECATION_WARNINGS === '1') return;
+  console.warn('[DEPRECATED] /api/divisions endpoints are not used by current frontend/scripts.');
+};
+
 // @desc    Get all divisions (optional: ?departmentId=...)
 // @route   GET /api/divisions
 // @access  Public/Protected
 const getDivisions = async (req, res) => {
   try {
+    warnDeprecated();
     const filter = {};
     if (req.query.departmentId) {
       filter.department = req.query.departmentId;
@@ -23,6 +29,7 @@ const getDivisions = async (req, res) => {
 // @access  Private/Admin
 const createDivision = async (req, res) => {
   try {
+    warnDeprecated();
     const { name, departmentId } = req.body;
 
     if (!name || !departmentId) {
@@ -51,6 +58,7 @@ const createDivision = async (req, res) => {
 // @access  Private/Admin
 const deleteDivision = async (req, res) => {
   try {
+    warnDeprecated();
     const division = await Division.findById(req.params.id);
 
     if (!division) {

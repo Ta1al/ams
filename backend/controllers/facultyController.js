@@ -1,10 +1,16 @@
 const Faculty = require('../models/Faculty');
 
+const warnDeprecated = () => {
+  if (process.env.SUPPRESS_DEPRECATION_WARNINGS === '1') return;
+  console.warn('[DEPRECATED] /api/faculties endpoints are not used by current frontend/scripts.');
+};
+
 // @desc    Get all faculties
 // @route   GET /api/faculties
 // @access  Public
 const getFaculties = async (req, res) => {
   try {
+    warnDeprecated();
     const faculties = await Faculty.find();
     res.status(200).json(faculties);
   } catch (error) {
@@ -17,6 +23,7 @@ const getFaculties = async (req, res) => {
 // @access  Private/Admin
 const createFaculty = async (req, res) => {
   try {
+    warnDeprecated();
     const { name } = req.body;
 
     if (!name) {
@@ -45,6 +52,7 @@ const createFaculty = async (req, res) => {
 // @access  Private/Admin
 const deleteFaculty = async (req, res) => {
   try {
+    warnDeprecated();
     const faculty = await Faculty.findById(req.params.id);
 
     if (!faculty) {
