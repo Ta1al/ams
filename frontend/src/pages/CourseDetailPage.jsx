@@ -122,6 +122,17 @@ const CourseDetailPage = () => {
 
   const handleEnrollSelected = async () => {
     if (!selectedStudentId) return;
+    
+    // Check if student is already enrolled
+    const isAlreadyEnrolled = enrolledStudents.some(
+      (s) => String(s._id) === String(selectedStudentId)
+    );
+    
+    if (isAlreadyEnrolled) {
+      setStudentsError('This student is already enrolled in this course.');
+      return;
+    }
+    
     setEnrollmentSaving(true);
     setStudentsError('');
     try {
