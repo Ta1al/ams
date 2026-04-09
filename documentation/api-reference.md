@@ -1,7 +1,7 @@
 # API Reference
 
 > **Note**: This documentation is automatically generated from the backend code.
-> Last updated: 2026-01-15T17:35:44.477Z
+> Last updated: 2026-04-06T21:58:24.792Z
 
 ## Overview
 
